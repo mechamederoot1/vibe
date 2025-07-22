@@ -77,11 +77,16 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             localStorage.setItem("pendingPassword", formData.password);
 
             // Send verification email
-            await emailVerificationService.sendVerificationEmail({
-              email: data.email,
-              firstName: data.first_name,
-              userId: data.id,
-            });
+            try {
+              await emailVerificationService.sendVerificationEmail({
+                email: data.email,
+                firstName: data.first_name,
+                userId: data.id,
+              });
+              console.log("Verification email sent successfully");
+            } catch (emailServiceError) {
+              console.warn("Email service unavailable, proceeding anyway:", emailServiceError);
+            }
 
             // Redirect to verification page
             console.log("Redirecting to /verify-email");
