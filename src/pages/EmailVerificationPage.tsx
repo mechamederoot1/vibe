@@ -156,10 +156,36 @@ const EmailVerificationPage: React.FC = () => {
         const pendingUser = localStorage.getItem('pendingVerificationUser');
         if (pendingUser) {
           const user = JSON.parse(pendingUser);
+          const pendingPassword = localStorage.getItem('pendingPassword');
+
+          // Fazer login automático
+          if (pendingPassword) {
+            try {
+              const loginResponse = await fetch('http://localhost:8000/auth/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: user.email,
+                  password: pendingPassword,
+                }),
+              });
+
+              if (loginResponse.ok) {
+                const loginData = await loginResponse.json();
+                localStorage.setItem('token', loginData.access_token);
+              }
+            } catch (error) {
+              console.error('Erro no login automático:', error);
+            }
+          }
+
           localStorage.removeItem('pendingVerificationUser');
           localStorage.removeItem('pendingVerificationEmail');
+          localStorage.removeItem('pendingPassword');
 
-          // Redirecionar para home - usuário será automaticamente logado pela resposta do backend
+          // Redirecionar para home
           setTimeout(() => {
             window.location.href = '/';
           }, 2000);
