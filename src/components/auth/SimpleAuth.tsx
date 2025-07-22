@@ -56,29 +56,21 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             token: data.access_token,
           });
         } else {
-          // After registration, automatically log in
-          const loginResponse = await fetch(
-            "http://localhost:8000/auth/login",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: formData.email,
-                password: formData.password,
-              }),
-            },
+          // After registration, redirect to email verification
+          // Store user data temporarily for verification process
+          localStorage.setItem(
+            "pendingVerificationUser",
+            JSON.stringify({
+              id: data.id,
+              firstName: data.first_name,
+              lastName: data.last_name,
+              email: data.email,
+            })
           );
+          localStorage.setItem("pendingVerificationEmail", data.email);
 
-          const loginData = await loginResponse.json();
-          if (loginResponse.ok) {
-            onLogin({
-              name: `${loginData.first_name} ${loginData.last_name}`,
-              email: loginData.email,
-              token: loginData.access_token,
-            });
-          }
+          // Redirect to verification page
+          window.location.href = "/verify-email";
         }
       } else {
         setError(data.detail || "Erro ao processar solicitação");
