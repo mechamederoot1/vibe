@@ -9,14 +9,31 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Fallback para configurações se .env não carregar
+if (!process.env.SMTP_HOST) {
+  console.log('⚙️ Aplicando configurações fallback...');
+  process.env.SMTP_HOST = 'smtp.hostinger.com';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'suporte@meuvibe.com';
+  process.env.SMTP_PASS = 'Dashwoodi@1995';
+  process.env.SMTP_FROM = 'no-reply@meuvibe.com';
+  process.env.VERIFICATION_CODE_EXPIRY = '300000';
+  process.env.RESEND_COOLDOWN = '60000';
+  process.env.MAX_RESEND_ATTEMPTS = '5';
+  process.env.DB_HOST = '127.0.0.1';
+  process.env.DB_PORT = '3306';
+  process.env.DB_USER = 'root';
+  process.env.DB_PASSWORD = 'Evo@000#!';
+  process.env.DB_NAME = 'vibe';
+}
+
 // Validar variáveis de ambiente necessárias
 const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'];
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.error('❌ Variáveis de ambiente faltando:', missingVars);
+  console.error('❌ Variáveis de ambiente ainda faltando:', missingVars);
   console.log('📋 Variáveis disponíveis:', Object.keys(process.env).filter(key => key.startsWith('SMTP')));
-  console.log('📁 Tentando carregar .env de:', path.join(__dirname, '.env'));
 } else {
   console.log('✅ Todas as variáveis de ambiente carregadas com sucesso');
 }
@@ -162,7 +179,7 @@ function getEmailTemplate(firstName, code, token, baseUrl = 'http://localhost:51
         
         <p>Olá <strong>${firstName}</strong>,</p>
         
-        <p>Bem-vindo ao Vibe! Para concluir seu cadastro, você precisa confirmar seu endere��o de e-mail.</p>
+        <p>Bem-vindo ao Vibe! Para concluir seu cadastro, você precisa confirmar seu endereço de e-mail.</p>
         
         <div class="code-container">
           <p><strong>Seu código de verificação:</strong></p>
@@ -781,7 +798,7 @@ app.post('/verify-recovery-code', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Código v��lido',
+      message: 'Código válido',
       token: recovery.recovery_token,
       userId: recovery.user_id
     });
