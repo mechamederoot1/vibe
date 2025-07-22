@@ -55,6 +55,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             name: `${data.first_name} ${data.last_name}`,
             email: data.email,
             token: data.access_token,
+            id: data.id,
           });
         } else {
           // After registration, send verification email and redirect
