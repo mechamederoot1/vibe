@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "../ui/Logo";
+import { apiService } from "../../services/ApiService";
 
 interface AuthProps {
   onLogin: (userData: {
