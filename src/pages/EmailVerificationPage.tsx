@@ -176,7 +176,7 @@ const EmailVerificationPage: React.FC = () => {
       }
     } catch (externalError) {
       console.error('❌ External email service error:', externalError);
-      setMessage('Serviço de e-mail temporariamente indisponível. Clique em "Reenviar código" para tentar novamente.');
+      setMessage('Serviço de e-mail temporariamente indispon��vel. Clique em "Reenviar código" para tentar novamente.');
       setMessageType('error');
       setCanResend(true);
     }
@@ -298,7 +298,7 @@ const EmailVerificationPage: React.FC = () => {
 
       // Redirecionar para home
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.reload(); // Recarrega para aplicar o login
       }, 2000);
     }
   };
