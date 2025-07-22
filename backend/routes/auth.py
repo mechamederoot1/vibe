@@ -39,10 +39,11 @@ def test_database_connection(db: Session = Depends(get_db)):
             "database_connected": False
         }
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
     try:
         print(f"🔍 Registration attempt for email: {user.email}")
+        print(f"🔍 Received data: {user.dict()}")
 
         # Validate required fields
         if not user.first_name or not user.first_name.strip():
@@ -64,98 +65,61 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
         print(f"✅ Email available: {user.email}")
 
-        # Cria novo usuário
-        try:
-            hashed_password = hash_password(user.password)
-            print(f"✅ Password hashed successfully")
-        except Exception as hash_error:
-            print(f"❌ Password hashing failed: {hash_error}")
-            raise Exception(f"Password hashing error: {hash_error}")
+        # Hash password
+        hashed_password = hash_password(user.password)
+        print(f"✅ Password hashed successfully")
 
-        # Converte birth_date string para objeto date
-        try:
-            birth_date_obj = user.get_birth_date_as_date() if user.birth_date else None
-            print(f"✅ Birth date processed: {birth_date_obj}")
-        except Exception as date_error:
-            print(f"❌ Birth date conversion failed: {date_error}")
-            birth_date_obj = None
+        # Process birth date
+        birth_date_obj = None
+        if user.birth_date:
+            try:
+                birth_date_obj = user.get_birth_date_as_date()
+                print(f"✅ Birth date processed: {birth_date_obj}")
+            except Exception as date_error:
+                print(f"⚠️ Birth date conversion failed: {date_error}")
 
-        print(f"🔍 Creating user with data:")
-        print(f"   Name: {user.first_name} {user.last_name}")
-        print(f"   Email: {user.email}")
-        print(f"   Gender: {user.gender}")
-        print(f"   Birth date: {birth_date_obj}")
-        print(f"   Phone: {user.phone}")
+        # Create user with only required fields first
+        db_user = User(
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            password_hash=hashed_password
+        )
 
-        try:
-            # Start with minimal required fields only
-            db_user = User(
-                first_name=user.first_name,
-                last_name=user.last_name,
-                email=user.email,
-                password_hash=hashed_password
-            )
+        # Add optional fields
+        if user.gender:
+            db_user.gender = user.gender
+        if birth_date_obj:
+            db_user.birth_date = birth_date_obj
+        if user.phone:
+            db_user.phone = user.phone
 
-            # Add optional fields if they exist
-            if user.gender:
-                db_user.gender = user.gender
-            if birth_date_obj:
-                db_user.birth_date = birth_date_obj
-            if user.phone:
-                db_user.phone = user.phone
+        print(f"✅ User object created")
 
-            print(f"✅ User object created with required fields")
-        except Exception as user_creation_error:
-            print(f"❌ User object creation failed: {user_creation_error}")
-            raise Exception(f"User creation error: {user_creation_error}")
+        # Save to database
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
 
-        try:
-            db.add(db_user)
-            print(f"✅ User added to session")
-        except Exception as add_error:
-            print(f"❌ Failed to add user to session: {add_error}")
-            raise Exception(f"Session add error: {add_error}")
+        print(f"✅ User {db_user.id} created successfully!")
 
-        try:
-            db.commit()
-            print(f"✅ Database commit successful")
-        except Exception as commit_error:
-            print(f"❌ Database commit failed: {commit_error}")
-            raise Exception(f"Database commit error: {commit_error}")
+        # Return minimal response to avoid serialization issues
+        return {
+            "id": db_user.id,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name,
+            "email": db_user.email,
+            "is_active": db_user.is_active,
+            "is_verified": getattr(db_user, 'is_verified', False),
+            "created_at": db_user.created_at.isoformat(),
+            "last_seen": db_user.last_seen.isoformat()
+        }
 
-        try:
-            db.refresh(db_user)
-            print(f"✅ User refreshed from database")
-        except Exception as refresh_error:
-            print(f"❌ Failed to refresh user: {refresh_error}")
-            raise Exception(f"Refresh error: {refresh_error}")
-
-        # TODO: Re-enable email verification after fixing database issues
-        print(f"✅ User {db_user.id} created successfully: {db_user.email}")
-        print(f"🔍 Debug - User verification status: {db_user.is_verified}")
-
-        # Send verification email automatically using sync helper
-        # try:
-        #     from .email_verification import create_verification_record
-        #     verification_success = create_verification_record(
-        #         user_id=db_user.id,
-        #         email=db_user.email,
-        #         first_name=db_user.first_name,
-        #         db=db
-        #     )
-        #
-        #     if verification_success:
-        #         print(f"📧 Verification email record created for {db_user.email}")
-        #     else:
-        #         print(f"⚠️ Could not create verification record for {db_user.email}")
-        #
-        # except Exception as email_error:
-        #     print(f"⚠️ Failed to create verification email: {email_error}")
-        #     # Don't fail registration if email sending fails
-        #     pass
-
-        return db_user
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
+        print(f"❌ Unexpected error: {type(e).__name__}: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno do servidor: {str(e)}")
 
