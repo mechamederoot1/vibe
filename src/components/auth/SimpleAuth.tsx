@@ -154,13 +154,13 @@ export function SimpleAuth({ onLogin }: AuthProps) {
 
             console.log("📦 User data stored in localStorage");
             console.log("🔄 Redirecting to verification page...");
-            
-            // Show success message
+
+            // Show success message and navigate
             alert('Conta criada com sucesso! Redirecionando para verificação de e-mail...');
 
-            // Use setTimeout to ensure state is updated before redirect
+            // Use navigate instead of window.location.href
             setTimeout(() => {
-              window.location.href = "/verify-email";
+              navigate('/verify-email');
             }, 100);
 
           } catch (storageError) {
