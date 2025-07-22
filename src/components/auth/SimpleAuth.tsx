@@ -76,48 +76,38 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             id: data.id,
           });
         } else {
-          // After registration, send verification email and redirect
-          console.log("Registration successful, starting email verification process");
-          try {
-            // Gerar username e display_id se não existirem
-            const username = data.username || `${formData.first_name.toLowerCase()}${formData.last_name.toLowerCase()}`.replace(/[^a-z0-9]/g, "").substring(0, 15) + Math.floor(Math.random() * 1000);
-            const displayId = data.display_id || Math.floor(Math.random() * 9000000000 + 1000000000).toString();
+          // After registration, redirect to verification
+          console.log("✅ Registration successful, processing...");
 
+          try {
             // Store user data temporarily for verification process
-            localStorage.setItem(
-              "pendingVerificationUser",
-              JSON.stringify({
-                id: data.id,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                email: data.email,
-                username: username,
-                display_id: displayId,
-              })
-            );
+            const userData = {
+              id: data.id,
+              firstName: data.first_name,
+              lastName: data.last_name,
+              email: data.email,
+              username: data.username || `${formData.first_name.toLowerCase()}${formData.last_name.toLowerCase()}`.replace(/[^a-z0-9]/g, "").substring(0, 15) + Math.floor(Math.random() * 1000),
+              display_id: data.display_id || Math.floor(Math.random() * 9000000000 + 1000000000).toString(),
+            };
+
+            localStorage.setItem("pendingVerificationUser", JSON.stringify(userData));
             localStorage.setItem("pendingVerificationEmail", data.email);
             localStorage.setItem("pendingPassword", formData.password);
 
-            // Send verification email
-            try {
-              await emailVerificationService.sendVerificationEmail({
-                email: data.email,
-                firstName: data.first_name,
-                userId: data.id,
-              });
-              console.log("Verification email sent successfully");
-            } catch (emailServiceError) {
-              console.warn("Email service unavailable, proceeding anyway:", emailServiceError);
-            }
+            console.log("📦 User data stored in localStorage");
+            console.log("🔄 Redirecting to verification page...");
 
-            // Redirect to verification page
-            console.log("Redirecting to /verify-email");
-            window.location.href = "/verify-email";
-          } catch (emailError) {
-            // Even if email fails, still redirect to verification page
-            console.error("Erro no bloco de verificação:", emailError);
-            console.log("Redirecting anyway...");
-            window.location.href = "/verify-email";
+            // Use setTimeout to ensure state is updated before redirect
+            setTimeout(() => {
+              window.location.href = "/verify-email";
+            }, 100);
+
+          } catch (storageError) {
+            console.error("❌ Error storing user data:", storageError);
+            // Fallback: still redirect to verification page
+            setTimeout(() => {
+              window.location.href = "/verify-email";
+            }, 100);
           }
         }
       } else {
