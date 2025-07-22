@@ -164,6 +164,10 @@ function App() {
               path="/politica-de-privacidade"
               element={<PrivacyPolicy />}
             />
+            <Route
+              path="/verify-email"
+              element={<EmailVerificationPage />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
