@@ -87,6 +87,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           } catch (emailError) {
             // Even if email fails, still redirect to verification page
             console.error("Erro ao enviar e-mail de verificação:", emailError);
+            alert("Erro no e-mail, mas redirecionando para verificação...");
             window.location.href = "/verify-email";
           }
         }
