@@ -61,6 +61,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           });
         } else {
           // After registration, send verification email and redirect
+          console.log("Registration successful, starting email verification process");
           try {
             // Store user data temporarily for verification process
             localStorage.setItem(
@@ -227,7 +228,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
                     value={formData.confirm_password}
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-                    placeholder="••••••••"
+                    placeholder="••��•••••"
                     required
                   />
                 </div>
