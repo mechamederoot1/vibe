@@ -43,7 +43,12 @@ class EmailVerificationService {
    */
   async sendVerificationEmail(data: SendVerificationRequest): Promise<VerificationResponse> {
     try {
-      const response = await axios.post(`${this.baseURL}/send-verification`, data);
+      const params = new URLSearchParams({
+        email: data.email,
+        first_name: data.firstName,
+        user_id: data.userId.toString()
+      });
+      const response = await axios.post(`${this.baseURL}/send-verification?${params}`);
       return response.data;
     } catch (error: any) {
       if (error.response?.data) {
