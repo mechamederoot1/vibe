@@ -253,11 +253,7 @@ const EmailVerificationPage: React.FC = () => {
 
     setResendLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/send-verification', {
-        email: editingEmail ? newEmail : email,
-        firstName: userData.firstName,
-        userId: userData.id
-      });
+      const response = await axios.post(`http://localhost:8000/email-verification/send-verification?email=${editingEmail ? newEmail : email}&first_name=${userData.firstName}&user_id=${userData.id}`);
 
       if (response.data.success) {
         setMessage('Novo código enviado com sucesso!');
