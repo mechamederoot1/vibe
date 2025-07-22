@@ -115,7 +115,10 @@ export function StoryAvatar({
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setShowMenu(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(false);
+            }}
           />
 
           {/* Menu */}
