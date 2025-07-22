@@ -42,26 +42,23 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_user)
 
-        # Send verification email automatically
+        # Send verification email automatically using sync helper
         try:
-            from .email_verification import send_verification_email
-            from .email_verification import SendVerificationRequest
-
-            verification_request = SendVerificationRequest(
+            from .email_verification import create_verification_record
+            verification_success = create_verification_record(
+                user_id=db_user.id,
                 email=db_user.email,
                 first_name=db_user.first_name,
-                user_id=db_user.id
+                db=db
             )
 
-            # Call the verification email function
-            from .email_verification import router as email_router
-            import asyncio
-
-            # We need to handle this properly since send_verification_email is async
-            print(f"📧 Automatically sending verification email to {db_user.email}")
+            if verification_success:
+                print(f"📧 Verification email record created for {db_user.email}")
+            else:
+                print(f"⚠️ Could not create verification record for {db_user.email}")
 
         except Exception as email_error:
-            print(f"⚠️ Failed to send verification email: {email_error}")
+            print(f"⚠️ Failed to create verification email: {email_error}")
             # Don't fail registration if email sending fails
             pass
 
