@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { Logo } from "../ui/Logo";
+import { emailVerificationService } from "../../services/EmailVerificationService";
 
 interface AuthProps {
   onLogin: (userData: { name: string; email: string; token: string }) => void;
@@ -47,6 +48,8 @@ export function SimpleAuth({ onLogin }: AuthProps) {
       });
 
       const data = await response.json();
+      console.log("Response data:", data);
+      console.log("Is login:", isLogin);
 
       if (response.ok) {
         if (isLogin) {
@@ -54,30 +57,45 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             name: `${data.first_name} ${data.last_name}`,
             email: data.email,
             token: data.access_token,
+            id: data.id,
           });
         } else {
-          // After registration, automatically log in
-          const loginResponse = await fetch(
-            "http://localhost:8000/auth/login",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: formData.email,
-                password: formData.password,
-              }),
-            },
-          );
+          // After registration, send verification email and redirect
+          console.log("Registration successful, starting email verification process");
+          try {
+            // Store user data temporarily for verification process
+            localStorage.setItem(
+              "pendingVerificationUser",
+              JSON.stringify({
+                id: data.id,
+                firstName: data.first_name,
+                lastName: data.last_name,
+                email: data.email,
+              })
+            );
+            localStorage.setItem("pendingVerificationEmail", data.email);
+            localStorage.setItem("pendingPassword", formData.password);
 
-          const loginData = await loginResponse.json();
-          if (loginResponse.ok) {
-            onLogin({
-              name: `${loginData.first_name} ${loginData.last_name}`,
-              email: loginData.email,
-              token: loginData.access_token,
-            });
+            // Send verification email
+            try {
+              await emailVerificationService.sendVerificationEmail({
+                email: data.email,
+                firstName: data.first_name,
+                userId: data.id,
+              });
+              console.log("Verification email sent successfully");
+            } catch (emailServiceError) {
+              console.warn("Email service unavailable, proceeding anyway:", emailServiceError);
+            }
+
+            // Redirect to verification page
+            console.log("Redirecting to /verify-email");
+            window.location.href = "/verify-email";
+          } catch (emailError) {
+            // Even if email fails, still redirect to verification page
+            console.error("Erro no bloco de verificação:", emailError);
+            console.log("Redirecting anyway...");
+            window.location.href = "/verify-email";
           }
         }
       } else {
@@ -240,6 +258,18 @@ export function SimpleAuth({ onLogin }: AuthProps) {
               )}
             </button>
           </form>
+
+          {/* Forgot Password Link */}
+          {isLogin && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => window.location.href = '/forgot-password'}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          )}
 
           {/* Toggle Auth Mode */}
           <div className="mt-6 text-center">
