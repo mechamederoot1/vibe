@@ -1,0 +1,1027 @@
+import React, { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  User,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
+  Download,
+  Trash2,
+  Key,
+  Eye,
+  Users,
+  Lock,
+  Camera,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  GraduationCap,
+  Heart,
+  Link as LinkIcon,
+  Save,
+  Check,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { NotificationModal } from "../components/modals/NotificationModal";
+
+interface User {
+  id?: number;
+  display_id?: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  cover_photo?: string;
+  bio?: string;
+  location?: string;
+  username?: string;
+  nickname?: string;
+  phone?: string;
+  website?: string;
+  birth_date?: string;
+  gender?: string;
+  relationship_status?: string;
+  work?: string;
+  education?: string;
+  token: string;
+}
+
+interface SettingsPageProps {
+  user: User;
+  onLogout: () => void;
+  onUserUpdate?: (userData: Partial<User>) => void;
+}
+
+export function SettingsPage({
+  user,
+  onLogout,
+  onUserUpdate,
+}: SettingsPageProps) {
+  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState("profile");
+  const [loading, setLoading] = useState(false);
+    const [saved, setSaved] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationData, setNotificationData] = useState({
+    type: "success" as "success" | "error" | "warning",
+    title: "",
+    message: "",
+  });
+
+  // Profile data
+  const [profileData, setProfileData] = useState({
+    first_name: user.name.split(" ")[0] || "",
+    last_name: user.name.split(" ").slice(1).join(" ") || "",
+    username: user.username || "",
+    nickname: user.nickname || "",
+    bio: user.bio || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    website: user.website || "",
+    location: user.location || "",
+    work: user.work || "",
+    education: user.education || "",
+    birth_date: user.birth_date || "",
+    gender: user.gender || "",
+    relationship_status: user.relationship_status || "",
+  });
+
+  // Privacy settings
+  const [privacySettings, setPrivacySettings] = useState({
+    profile_visibility: "friends",
+    post_visibility: "friends",
+    story_visibility: "friends",
+    friend_requests: "everyone",
+    tagging_permission: "friends",
+    email_visibility: "private",
+    phone_visibility: "private",
+    birth_date_visibility: "friends",
+  });
+
+  // Notification settings
+  const [notificationSettings, setNotificationSettings] = useState({
+    email_notifications: true,
+    push_notifications: true,
+    friend_request_notifications: true,
+    comment_notifications: true,
+    reaction_notifications: true,
+    message_notifications: true,
+    story_notifications: true,
+  });
+
+  useEffect(() => {
+    fetchPrivacySettings();
+    fetchNotificationSettings();
+  }, []);
+
+  const fetchPrivacySettings = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/settings/privacy", {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPrivacySettings(data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar configurações de privacidade:", error);
+    }
+  };
+
+  const fetchNotificationSettings = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/settings/notifications",
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setNotificationSettings(data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar configurações de notificação:", error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/settings/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+<<<<<<< HEAD
+
+        // Show success modal
+        setNotificationData({
+          type: "success",
+          title: "Sucesso!",
+          message: "Suas informações de perfil foram atualizadas com sucesso.",
+        });
+        setShowNotificationModal(true);
+
+=======
+>>>>>>> 9765b1b75ce40044bdfd03e22cb81063dca5ca92
+        if (onUserUpdate) {
+          onUserUpdate({
+            name: `${profileData.first_name} ${profileData.last_name}`,
+            username: profileData.username,
+            nickname: profileData.nickname,
+            bio: profileData.bio,
+            phone: profileData.phone,
+            website: profileData.website,
+            location: profileData.location,
+            work: profileData.work,
+            education: profileData.education,
+            birth_date: profileData.birth_date,
+            gender: profileData.gender,
+            relationship_status: profileData.relationship_status,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao salvar perfil:", error);
+<<<<<<< HEAD
+
+      // Show error modal
+      setNotificationData({
+        type: "error",
+        title: "Erro!",
+        message:
+          "Erro ao salvar perfil. Verifique sua conexão e tente novamente.",
+      });
+      setShowNotificationModal(true);
+=======
+>>>>>>> 9765b1b75ce40044bdfd03e22cb81063dca5ca92
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSavePrivacy = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/settings/privacy", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(privacySettings),
+      });
+
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar configurações de privacidade:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        "http://localhost:8000/settings/notifications",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify(notificationSettings),
+        },
+      );
+
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar configurações de notificação:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sections = [
+    { id: "profile", label: "Perfil", icon: User },
+    { id: "privacy", label: "Privacidade", icon: Shield },
+    { id: "notifications", label: "Notificações", icon: Bell },
+    { id: "appearance", label: "Aparência", icon: Palette },
+    { id: "language", label: "Idioma", icon: Globe },
+    { id: "data", label: "Dados", icon: Download },
+    { id: "account", label: "Conta", icon: Trash2 },
+  ];
+
+  const renderProfileSection = () => (
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Informações do Perfil
+        </h2>
+        <p className="text-gray-600">
+          Gerencie suas informações pessoais e como outros te veem
+        </p>
+      </div>
+
+      {/* Profile Photo */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-4">Foto do Perfil</h3>
+        <div className="flex items-center space-x-6">
+          <img
+            src={
+              user.avatar ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3B82F6&color=fff`
+            }
+            alt={user.name}
+            className="w-20 h-20 rounded-full object-cover"
+          />
+          <div className="space-y-2">
+            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Camera className="w-4 h-4" />
+              <span>Alterar Foto</span>
+            </button>
+            <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <Trash2 className="w-4 h-4" />
+              <span>Remover</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Basic Info */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">
+          Informações Básicas
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <User className="w-4 h-4 inline mr-2" />
+              Nome
+            </label>
+            <input
+              type="text"
+              value={profileData.first_name}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  first_name: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sobrenome
+            </label>
+            <input
+              type="text"
+              value={profileData.last_name}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  last_name: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome de usuário
+            </label>
+            <input
+              type="text"
+              value={profileData.username}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  username: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Apelido
+            </label>
+            <input
+              type="text"
+              value={profileData.nickname}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  nickname: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Info */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">Contato</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Mail className="w-4 h-4 inline mr-2" />
+              Email
+            </label>
+            <input
+              type="email"
+              value={profileData.email}
+              onChange={(e) =>
+                setProfileData((prev) => ({ ...prev, email: e.target.value }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Phone className="w-4 h-4 inline mr-2" />
+              Telefone
+            </label>
+            <input
+              type="tel"
+              value={profileData.phone}
+              onChange={(e) =>
+                setProfileData((prev) => ({ ...prev, phone: e.target.value }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <LinkIcon className="w-4 h-4 inline mr-2" />
+              Website
+            </label>
+            <input
+              type="url"
+              value={profileData.website}
+              onChange={(e) =>
+                setProfileData((prev) => ({ ...prev, website: e.target.value }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <MapPin className="w-4 h-4 inline mr-2" />
+              Localização
+            </label>
+            <input
+              type="text"
+              value={profileData.location}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  location: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bio */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-4">Bio</h3>
+        <textarea
+          value={profileData.bio}
+          onChange={(e) =>
+            setProfileData((prev) => ({ ...prev, bio: e.target.value }))
+          }
+          rows={4}
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          placeholder="Conte um pouco sobre você..."
+        />
+      </div>
+
+      {/* Additional Info */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">
+          Informações Adicionais
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Briefcase className="w-4 h-4 inline mr-2" />
+              Trabalho
+            </label>
+            <input
+              type="text"
+              value={profileData.work}
+              onChange={(e) =>
+                setProfileData((prev) => ({ ...prev, work: e.target.value }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <GraduationCap className="w-4 h-4 inline mr-2" />
+              Educação
+            </label>
+            <input
+              type="text"
+              value={profileData.education}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  education: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Calendar className="w-4 h-4 inline mr-2" />
+              Data de Nascimento
+            </label>
+            <input
+              type="date"
+              value={profileData.birth_date}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  birth_date: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gênero
+            </label>
+            <select
+              value={profileData.gender}
+              onChange={(e) =>
+                setProfileData((prev) => ({ ...prev, gender: e.target.value }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Selecione</option>
+              <option value="male">Masculino</option>
+              <option value="female">Feminino</option>
+              <option value="other">Outro</option>
+              <option value="prefer_not_to_say">Prefiro não dizer</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Heart className="w-4 h-4 inline mr-2" />
+              Status de Relacionamento
+            </label>
+            <select
+              value={profileData.relationship_status}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  relationship_status: e.target.value,
+                }))
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Selecione</option>
+              <option value="single">Solteiro(a)</option>
+              <option value="in_relationship">Em um relacionamento</option>
+              <option value="married">Casado(a)</option>
+              <option value="divorced">Divorciado(a)</option>
+              <option value="widowed">Viúvo(a)</option>
+              <option value="complicated">É complicado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleSaveProfile}
+          disabled={loading}
+          className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+          <span>
+            {saved ? "Salvo!" : loading ? "Salvando..." : "Salvar Alterações"}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderPrivacySection = () => (
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Configurações de Privacidade
+        </h2>
+        <p className="text-gray-600">
+          Controle quem pode ver seu conteúdo e interagir com você
+        </p>
+      </div>
+
+      {/* Profile Visibility */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">
+          Visibilidade do Perfil
+        </h3>
+        <div className="space-y-6">
+          {[
+            {
+              key: "profile_visibility",
+              label: "Quem pode ver seu perfil",
+              icon: Eye,
+            },
+            {
+              key: "post_visibility",
+              label: "Quem pode ver seus posts",
+              icon: Globe,
+            },
+            {
+              key: "story_visibility",
+              label: "Quem pode ver suas stories",
+              icon: Camera,
+            },
+          ].map(({ key, label, icon: Icon }) => (
+            <div key={key} className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Icon className="w-5 h-5 text-gray-600" />
+                <span className="text-gray-900">{label}</span>
+              </div>
+              <select
+                value={privacySettings[key as keyof typeof privacySettings]}
+                onChange={(e) =>
+                  setPrivacySettings((prev) => ({
+                    ...prev,
+                    [key]: e.target.value,
+                  }))
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="public">Público</option>
+                <option value="friends">Amigos</option>
+                <option value="only_me">Apenas eu</option>
+              </select>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Interaction Settings */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">Interações</h3>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Users className="w-5 h-5 text-gray-600" />
+              <span className="text-gray-900">Solicitações de amizade</span>
+            </div>
+            <select
+              value={privacySettings.friend_requests}
+              onChange={(e) =>
+                setPrivacySettings((prev) => ({
+                  ...prev,
+                  friend_requests: e.target.value,
+                }))
+              }
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="everyone">Todos</option>
+              <option value="friends_of_friends">Amigos de amigos</option>
+              <option value="no_one">Ninguém</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <User className="w-5 h-5 text-gray-600" />
+              <span className="text-gray-900">Marcações em posts</span>
+            </div>
+            <select
+              value={privacySettings.tagging_permission}
+              onChange={(e) =>
+                setPrivacySettings((prev) => ({
+                  ...prev,
+                  tagging_permission: e.target.value,
+                }))
+              }
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="everyone">Todos</option>
+              <option value="friends">Amigos</option>
+              <option value="no_one">Ninguém</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Info Visibility */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">
+          Informações de Contato
+        </h3>
+        <div className="space-y-6">
+          {[
+            { key: "email_visibility", label: "Email", icon: Mail },
+            { key: "phone_visibility", label: "Telefone", icon: Phone },
+            {
+              key: "birth_date_visibility",
+              label: "Data de nascimento",
+              icon: Calendar,
+            },
+          ].map(({ key, label, icon: Icon }) => (
+            <div key={key} className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Icon className="w-5 h-5 text-gray-600" />
+                <span className="text-gray-900">{label}</span>
+              </div>
+              <select
+                value={privacySettings[key as keyof typeof privacySettings]}
+                onChange={(e) =>
+                  setPrivacySettings((prev) => ({
+                    ...prev,
+                    [key]: e.target.value,
+                  }))
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="public">Público</option>
+                <option value="friends">Amigos</option>
+                <option value="private">Privado</option>
+              </select>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleSavePrivacy}
+          disabled={loading}
+          className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+          <span>
+            {saved ? "Salvo!" : loading ? "Salvando..." : "Salvar Alterações"}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderNotificationsSection = () => (
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Notificações</h2>
+        <p className="text-gray-600">
+          Gerencie como e quando você recebe notificações
+        </p>
+      </div>
+
+      {/* Push Notifications */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">Notificações Push</h3>
+        <div className="space-y-4">
+          {[
+            {
+              key: "push_notifications",
+              label: "Notificações push",
+              description: "Receba notificações em tempo real",
+            },
+            {
+              key: "friend_request_notifications",
+              label: "Solicitações de amizade",
+              description: "Quando alguém te envia uma solicitação",
+            },
+            {
+              key: "comment_notifications",
+              label: "Comentários",
+              description: "Quando alguém comenta em seus posts",
+            },
+            {
+              key: "reaction_notifications",
+              label: "Reações",
+              description: "Quando alguém reage aos seus posts",
+            },
+            {
+              key: "message_notifications",
+              label: "Mensagens",
+              description: "Quando você recebe uma nova mensagem",
+            },
+            {
+              key: "story_notifications",
+              label: "Stories",
+              description: "Quando amigos postam stories",
+            },
+          ].map(({ key, label, description }) => (
+            <div key={key} className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-gray-900">{label}</div>
+                <div className="text-sm text-gray-600">{description}</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={
+                    notificationSettings[
+                      key as keyof typeof notificationSettings
+                    ]
+                  }
+                  onChange={(e) =>
+                    setNotificationSettings((prev) => ({
+                      ...prev,
+                      [key]: e.target.checked,
+                    }))
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Email Notifications */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-6">
+          Notificações por Email
+        </h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-medium text-gray-900">Resumo por email</div>
+            <div className="text-sm text-gray-600">
+              Receba um resumo semanal de atividades
+            </div>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={notificationSettings.email_notifications}
+              onChange={(e) =>
+                setNotificationSettings((prev) => ({
+                  ...prev,
+                  email_notifications: e.target.checked,
+                }))
+              }
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleSaveNotifications}
+          disabled={loading}
+          className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+          <span>
+            {saved ? "Salvo!" : loading ? "Salvando..." : "Salvar Alterações"}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderAccountSection = () => (
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Gerenciar Conta
+        </h2>
+        <p className="text-gray-600">Configurações avançadas da sua conta</p>
+      </div>
+
+      {/* Password */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-4">Segurança</h3>
+        <div className="space-y-4">
+          <button className="flex items-center space-x-3 w-full text-left p-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+            <Key className="w-5 h-5 text-gray-600" />
+            <div>
+              <div className="font-medium text-gray-900">Alterar senha</div>
+              <div className="text-sm text-gray-600">
+                Última alteração há 3 meses
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Data Management */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-4">Seus Dados</h3>
+        <div className="space-y-4">
+          <button className="flex items-center space-x-3 w-full text-left p-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+            <Download className="w-5 h-5 text-gray-600" />
+            <div>
+              <div className="font-medium text-gray-900">Baixar dados</div>
+              <div className="text-sm text-gray-600">
+                Obtenha uma cópia dos seus dados
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-red-50 rounded-2xl p-6 border border-red-200">
+        <h3 className="font-semibold text-red-900 mb-4">Zona de Perigo</h3>
+        <div className="space-y-4">
+          <button className="flex items-center space-x-3 w-full text-left p-4 border border-red-300 rounded-xl hover:bg-red-100 transition-colors text-red-700">
+            <Trash2 className="w-5 h-5" />
+            <div>
+              <div className="font-medium">Desativar conta</div>
+              <div className="text-sm">Oculte temporariamente sua conta</div>
+            </div>
+          </button>
+          <button className="flex items-center space-x-3 w-full text-left p-4 border border-red-300 rounded-xl hover:bg-red-100 transition-colors text-red-700">
+            <Trash2 className="w-5 h-5" />
+            <div>
+              <div className="font-medium">Excluir conta</div>
+              <div className="text-sm">
+                Exclua permanentemente sua conta e dados
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate("/")}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Configurações
+              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <nav className="space-y-2 sticky top-24">
+              {sections.map((section) => {
+                const Icon = section.icon;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-xl transition-colors ${
+                      activeSection === section.id
+                        ? "bg-blue-100 text-blue-700 border border-blue-200"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{section.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Content */}
+          <div className="lg:col-span-3 mt-8 lg:mt-0">
+            {activeSection === "profile" && renderProfileSection()}
+            {activeSection === "privacy" && renderPrivacySection()}
+            {activeSection === "notifications" && renderNotificationsSection()}
+            {activeSection === "account" && renderAccountSection()}
+            {activeSection === "appearance" && (
+              <div className="text-center py-12">
+                <Palette className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Em breve
+                </h3>
+                <p className="text-gray-600">
+                  Configuraç��es de aparência estarão disponíveis em breve
+                </p>
+              </div>
+            )}
+            {activeSection === "language" && (
+              <div className="text-center py-12">
+                <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Em breve
+                </h3>
+                <p className="text-gray-600">
+                  Configurações de idioma estarão disponíveis em breve
+                </p>
+              </div>
+            )}
+            {activeSection === "data" && (
+              <div className="text-center py-12">
+                <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Em breve
+                </h3>
+                <p className="text-gray-600">
+                  Gerenciamento de dados estará disponível em breve
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+<<<<<<< HEAD
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        type={notificationData.type}
+        title={notificationData.title}
+        message={notificationData.message}
+      />
+=======
+>>>>>>> 9765b1b75ce40044bdfd03e22cb81063dca5ca92
+    </div>
+  );
+}
