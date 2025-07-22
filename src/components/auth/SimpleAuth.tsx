@@ -348,7 +348,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           {isLogin && (
             <div className="mt-4 text-center">
               <button
-                onClick={() => window.location.href = '/forgot-password'}
+                onClick={() => navigate('/forgot-password')}
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
                 Esqueci minha senha
