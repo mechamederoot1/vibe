@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Mail, Clock, RefreshCw, Edit3, ArrowLeft } from 'lucide-react';
-import axios from 'axios';
+import { emailVerificationService } from '../services/EmailVerificationService';
 
 interface VerificationResponse {
   success: boolean;
@@ -24,10 +24,11 @@ const EmailVerificationPage: React.FC = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [countdown, setCountdown] = useState(0);
-  const [canResend, setCanResend] = useState(true);
+  const [canResend, setCanResend] = useState(false); // Começa como false
+  const [hasTriedSending, setHasTriedSending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Dados do usuário (normalmente viriam do contexto/localStorage)
+  // Dados do usuário
   const [userData, setUserData] = useState({
     id: null,
     firstName: '',
@@ -42,7 +43,6 @@ const EmailVerificationPage: React.FC = () => {
     }
 
     // Recuperar dados do usuário do localStorage
-    const storedUser = localStorage.getItem('user');
     const pendingUser = localStorage.getItem('pendingVerificationUser');
     const storedEmail = localStorage.getItem('pendingVerificationEmail');
 
@@ -52,12 +52,11 @@ const EmailVerificationPage: React.FC = () => {
       setUserData(user);
       setEmail(user.email || storedEmail || '');
       setNewEmail(user.email || storedEmail || '');
-    } else if (storedUser) {
-      // Usuário logado
-      const user = JSON.parse(storedUser);
-      setUserData(user);
-      setEmail(user.email || storedEmail || '');
-      setNewEmail(user.email || storedEmail || '');
+      
+      // Tentar enviar código automaticamente na primeira vez
+      if (user.id && (user.email || storedEmail)) {
+        sendInitialVerificationCode(user);
+      }
     }
   }, [searchParams]);
 
@@ -79,67 +78,48 @@ const EmailVerificationPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [countdown]);
 
+  const sendInitialVerificationCode = async (user: any) => {
+    if (hasTriedSending) return;
+    
+    try {
+      setHasTriedSending(true);
+      console.log('📧 Enviando código inicial de verificação...');
+      
+      const response = await emailVerificationService.sendVerificationEmail({
+        email: user.email,
+        firstName: user.firstName,
+        userId: user.id
+      });
+
+      if (response.success) {
+        setMessage('Código de verificação enviado para seu e-mail!');
+        setMessageType('success');
+        setCountdown(60); // 1 minuto de cooldown
+        setCanResend(false);
+      }
+    } catch (error: any) {
+      console.error('❌ Erro ao enviar código inicial:', error);
+      setMessage('Erro ao enviar código. Clique em "Reenviar código" para tentar novamente.');
+      setMessageType('error');
+      setCanResend(true);
+    }
+  };
+
   const verifyWithToken = async (token: string) => {
     setLoading(true);
     try {
-      const response = await axios.post(`http://localhost:8000/email-verification/verify-token?token=${token}`);
+      const response = await emailVerificationService.verifyToken({ token });
       
-      if (response.data.success) {
+      if (response.success) {
         setIsVerified(true);
         setMessage('E-mail verificado com sucesso! Redirecionando...');
         setMessageType('success');
         
-        // Limpar dados temporários e fazer login automático
-        const pendingUser = localStorage.getItem('pendingVerificationUser');
-        if (pendingUser) {
-          const user = JSON.parse(pendingUser);
-          const pendingPassword = localStorage.getItem('pendingPassword');
-
-          // Fazer login automático
-          if (pendingPassword) {
-            try {
-              const loginResponse = await fetch('http://localhost:8000/auth/login', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  email: user.email,
-                  password: pendingPassword,
-                }),
-              });
-
-              if (loginResponse.ok) {
-                const loginData = await loginResponse.json();
-                localStorage.setItem('token', loginData.access_token);
-              }
-            } catch (error) {
-              console.error('Erro no login automático:', error);
-            }
-          }
-
-          localStorage.removeItem('pendingVerificationUser');
-          localStorage.removeItem('pendingVerificationEmail');
-          localStorage.removeItem('pendingPassword');
-
-          // Redirecionar para home
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-        } else {
-          // Atualizar dados do usuário existente
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          user.is_verified = true;
-          localStorage.setItem('user', JSON.stringify(user));
-
-          // Redirecionar após 2 segundos
-          setTimeout(() => {
-            navigate('/');
-          }, 2000);
-        }
+        // Auto login e redirecionamento
+        handleSuccessfulVerification();
       }
     } catch (error: any) {
-      setMessage(error.response?.data?.message || 'Erro ao verificar token');
+      setMessage(error.message || 'Erro ao verificar token');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -147,7 +127,7 @@ const EmailVerificationPage: React.FC = () => {
   };
 
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Apenas um dígito por campo
+    if (value.length > 1) return;
     
     const newCode = [...verificationCode];
     newCode[index] = value;
@@ -181,64 +161,21 @@ const EmailVerificationPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`http://localhost:8000/email-verification/verify-code?user_id=${userData.id}&code=${codeToVerify}`);
+      const response = await emailVerificationService.verifyCode({
+        userId: userData.id,
+        code: codeToVerify
+      });
 
-      if (response.data.success) {
+      if (response.success) {
         setIsVerified(true);
         setMessage('E-mail verificado com sucesso! Redirecionando...');
         setMessageType('success');
 
-        // Limpar dados temporários e fazer login automático
-        const pendingUser = localStorage.getItem('pendingVerificationUser');
-        if (pendingUser) {
-          const user = JSON.parse(pendingUser);
-          const pendingPassword = localStorage.getItem('pendingPassword');
-
-          // Fazer login automático
-          if (pendingPassword) {
-            try {
-              const loginResponse = await fetch('http://localhost:8000/auth/login', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  email: user.email,
-                  password: pendingPassword,
-                }),
-              });
-
-              if (loginResponse.ok) {
-                const loginData = await loginResponse.json();
-                localStorage.setItem('token', loginData.access_token);
-              }
-            } catch (error) {
-              console.error('Erro no login automático:', error);
-            }
-          }
-
-          localStorage.removeItem('pendingVerificationUser');
-          localStorage.removeItem('pendingVerificationEmail');
-          localStorage.removeItem('pendingPassword');
-
-          // Redirecionar para home
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-        } else {
-          // Atualizar dados do usuário existente
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          user.is_verified = true;
-          localStorage.setItem('user', JSON.stringify(user));
-
-          // Redirecionar após 2 segundos
-          setTimeout(() => {
-            navigate('/');
-          }, 2000);
-        }
+        // Auto login e redirecionamento
+        handleSuccessfulVerification();
       }
     } catch (error: any) {
-      setMessage(error.response?.data?.message || 'Código inválido ou expirado');
+      setMessage(error.message || 'Código inválido ou expirado');
       setMessageType('error');
       // Limpar código em caso de erro
       setVerificationCode(['', '', '', '', '', '']);
@@ -248,17 +185,63 @@ const EmailVerificationPage: React.FC = () => {
     }
   };
 
+  const handleSuccessfulVerification = async () => {
+    // Limpar dados temporários e fazer login automático
+    const pendingUser = localStorage.getItem('pendingVerificationUser');
+    if (pendingUser) {
+      const user = JSON.parse(pendingUser);
+      const pendingPassword = localStorage.getItem('pendingPassword');
+
+      // Fazer login automático
+      if (pendingPassword) {
+        try {
+          const loginResponse = await fetch('http://localhost:8000/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: user.email,
+              password: pendingPassword,
+            }),
+          });
+
+          if (loginResponse.ok) {
+            const loginData = await loginResponse.json();
+            localStorage.setItem('token', loginData.access_token);
+          }
+        } catch (error) {
+          console.error('Erro no login automático:', error);
+        }
+      }
+
+      localStorage.removeItem('pendingVerificationUser');
+      localStorage.removeItem('pendingVerificationEmail');
+      localStorage.removeItem('pendingPassword');
+
+      // Redirecionar para home
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+  };
+
   const resendCode = async () => {
     if (!canResend || resendLoading) return;
 
     setResendLoading(true);
     try {
-      const response = await axios.post(`http://localhost:8000/email-verification/send-verification?email=${editingEmail ? newEmail : email}&first_name=${userData.firstName}&user_id=${userData.id}`);
+      const response = await emailVerificationService.sendVerificationEmail({
+        email: editingEmail ? newEmail : email,
+        firstName: userData.firstName,
+        userId: userData.id
+      });
 
-      if (response.data.success) {
+      if (response.success) {
         setMessage('Novo código enviado com sucesso!');
         setMessageType('success');
-        setCountdown(Math.ceil(response.data.cooldownMs / 1000));
+        setCountdown(60); // 1 minuto de cooldown
+        setCanResend(false);
         
         // Se estava editando e-mail, confirmar a mudança
         if (editingEmail) {
@@ -268,11 +251,13 @@ const EmailVerificationPage: React.FC = () => {
         }
       }
     } catch (error: any) {
-      setMessage(error.response?.data?.message || 'Erro ao reenviar código');
+      console.error('❌ Erro ao reenviar código:', error);
+      setMessage(error.message || 'Erro ao reenviar código');
       setMessageType('error');
       
-      if (error.response?.data?.retryAfter) {
-        setCountdown(Math.ceil(error.response.data.retryAfter / 1000));
+      // Se há tempo de retry no erro, usar esse tempo
+      if (error.retryAfter) {
+        setCountdown(Math.ceil(error.retryAfter / 1000));
       }
     } finally {
       setResendLoading(false);
@@ -326,7 +311,7 @@ const EmailVerificationPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Confirme seu E-mail</h1>
           <p className="text-gray-600">
-            Enviamos um código de verificação para
+            Confirme seu endereço de e-mail.
           </p>
         </div>
 
@@ -444,7 +429,9 @@ const EmailVerificationPage: React.FC = () => {
           ) : (
             <div className="flex items-center justify-center space-x-1 text-sm text-gray-500">
               <Clock className="w-3 h-3" />
-              <span>Reenviar em {countdown}s</span>
+              <span>
+                {countdown > 0 ? `Reenviar em ${countdown}s` : 'Preparando...'}
+              </span>
             </div>
           )}
         </div>
