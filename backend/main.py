@@ -89,7 +89,7 @@ class User(Base):
     last_name = Column(String(50), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    gender = Column(String(10))
+    gender = Column(String(20))
     birth_date = Column(Date)
     phone = Column(String(20))
 
@@ -2419,7 +2419,7 @@ async def update_profile(profile_data: UserProfileUpdate, current_user: User = D
 
 @app.put("/settings/profile")
 async def update_settings_profile(profile_data: UserProfileUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Atualizar perfil do usuário (endpoint alternativo)"""
+    """Atualizar perfil do usu��rio (endpoint alternativo)"""
     return await update_profile(profile_data, current_user, db)
 
 @app.put("/settings/password")
