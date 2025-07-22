@@ -76,11 +76,9 @@ export function StoryAvatar({
 
   const avatarElement = (
     <div className={`relative inline-block ${className}`}>
-      {/* Story indicator ring - more visible with thicker border */}
+      {/* Story indicator ring - static without animation */}
       {showIndicator && hasStories && !loading && (
         <div className={`absolute -inset-1 rounded-full bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 p-1 shadow-lg`}>
-          {/* Animated pulse ring */}
-          <div className={`absolute inset-0 rounded-full bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 animate-ping opacity-75`} />
         </div>
       )}
 
