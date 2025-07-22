@@ -111,12 +111,20 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           }
         }
       } else {
-        const errorData = await response.json();
-        console.error("Registration error:", errorData);
+        // Handle registration/login error
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.error("Error parsing response JSON:", jsonError);
+          errorData = { detail: "Erro na resposta do servidor" };
+        }
+
+        console.error("Registration/Login error:", errorData);
         setError(errorData.detail || "Erro ao processar solicitação");
       }
     } catch (error) {
-      console.error("Network error:", error);
+      console.error("❌ Network or processing error:", error);
       setError("Erro de conexão. Tente novamente.");
     } finally {
       setLoading(false);
