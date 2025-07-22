@@ -17,7 +17,7 @@ SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=587
 SMTP_USER=suporte@meuvibe.com
 SMTP_PASS=Dashwoodi@1995
-SMTP_FROM=no-reply@vibe.com
+SMTP_FROM=no-reply@meuvibe.com
 
 # Configurações de verificação de e-mail
 VERIFICATION_CODE_EXPIRY=300000
