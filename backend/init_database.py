@@ -4,7 +4,8 @@ Script para inicializar o banco de dados MySQL com as tabelas necessárias
 """
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from main import Base, get_database_url
+from core.database import Base
+from core.config import get_database_url
 import os
 from dotenv import load_dotenv
 
