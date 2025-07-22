@@ -4,6 +4,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Debug do arquivo .env
