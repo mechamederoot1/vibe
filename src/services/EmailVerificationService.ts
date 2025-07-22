@@ -66,7 +66,11 @@ class EmailVerificationService {
    */
   async verifyCode(data: VerifyCodeRequest): Promise<VerificationResponse> {
     try {
-      const response = await axios.post(`${this.baseURL}/verify-code`, data);
+      const params = new URLSearchParams({
+        user_id: data.userId.toString(),
+        code: data.code
+      });
+      const response = await axios.post(`${this.baseURL}/verify-code?${params}`);
       return response.data;
     } catch (error: any) {
       if (error.response?.data) {
