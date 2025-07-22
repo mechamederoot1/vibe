@@ -176,7 +176,7 @@ const EmailVerificationPage: React.FC = () => {
       }
     } catch (externalError) {
       console.error('❌ External email service error:', externalError);
-      setMessage('Serviço de e-mail temporariamente indispon��vel. Clique em "Reenviar código" para tentar novamente.');
+      setMessage('Serviço de e-mail temporariamente indisponível. Clique em "Reenviar código" para tentar novamente.');
       setMessageType('error');
       setCanResend(true);
     }
@@ -568,7 +568,7 @@ const EmailVerificationPage: React.FC = () => {
         {/* Back to Login */}
         <div className="mt-6 pt-4 border-t border-gray-200 text-center">
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/')}
             className="text-gray-600 hover:text-gray-700 text-sm flex items-center justify-center space-x-1"
           >
             <ArrowLeft className="w-3 h-3" />
