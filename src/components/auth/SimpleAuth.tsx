@@ -9,6 +9,7 @@ interface AuthProps {
 }
 
 export function SimpleAuth({ onLogin }: AuthProps) {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     first_name: "",
