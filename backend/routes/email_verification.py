@@ -1,21 +1,16 @@
 """
 Rotas de verificação de e-mail
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from datetime import datetime, timedelta
 import random
 import secrets
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import os
+from pydantic import BaseModel
 
 from core.database import get_db, Base
-from core.security import get_current_user
 from models import User
-from schemas import UserResponse
 
 router = APIRouter(prefix="/email-verification", tags=["email-verification"])
 
@@ -34,6 +29,19 @@ class EmailVerification(Base):
     verified_at = Column(DateTime, nullable=True)
     attempts = Column(Integer, default=1)
 
+# Schemas
+class SendVerificationRequest(BaseModel):
+    email: str
+    first_name: str
+    user_id: int
+
+class VerifyCodeRequest(BaseModel):
+    user_id: int
+    code: str
+
+class VerifyTokenRequest(BaseModel):
+    token: str
+
 def generate_verification_code():
     """Gera código de 6 dígitos"""
     return str(random.randint(100000, 999999))
@@ -42,122 +50,23 @@ def generate_verification_token():
     """Gera token de verificação"""
     return secrets.token_hex(32)
 
-def create_email_template(first_name: str, code: str, token: str):
-    """Cria template do e-mail de verificação"""
-    base_url = "http://localhost:5173"
-    verification_url = f"{base_url}/verify-email?token={token}"
-    
-    return f"""
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Confirme seu e-mail - Vibe</title>
-        <style>
-            body {{
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-                background-color: #f7f7f7;
-            }}
-            .container {{
-                background: white;
-                padding: 40px;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }}
-            .header {{
-                text-align: center;
-                margin-bottom: 30px;
-            }}
-            .logo {{
-                font-size: 32px;
-                font-weight: bold;
-                color: #6366f1;
-                margin-bottom: 10px;
-            }}
-            .title {{
-                font-size: 24px;
-                margin-bottom: 20px;
-                color: #1f2937;
-            }}
-            .code-container {{
-                background: #f8fafc;
-                border: 2px dashed #e2e8f0;
-                border-radius: 8px;
-                padding: 20px;
-                text-align: center;
-                margin: 20px 0;
-            }}
-            .verification-code {{
-                font-size: 32px;
-                font-weight: bold;
-                color: #6366f1;
-                letter-spacing: 4px;
-                margin: 10px 0;
-            }}
-            .button {{
-                display: inline-block;
-                background: #6366f1;
-                color: white;
-                padding: 15px 30px;
-                text-decoration: none;
-                border-radius: 8px;
-                font-weight: 500;
-                margin: 20px 0;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <div class="logo">Vibe</div>
-                <h1 class="title">Confirme seu e-mail</h1>
-            </div>
-            
-            <p>Olá <strong>{first_name}</strong>,</p>
-            
-            <p>Bem-vindo ao Vibe! Para concluir seu cadastro, você precisa confirmar seu endereço de e-mail.</p>
-            
-            <div class="code-container">
-                <p><strong>Seu código de verificação:</strong></p>
-                <div class="verification-code">{code}</div>
-                <p style="font-size: 14px; color: #6b7280;">Este código expira em 5 minutos</p>
-            </div>
-            
-            <p style="text-align: center;">
-                <strong>Ou clique no botão abaixo para confirmar automaticamente:</strong>
-            </p>
-            
-            <div style="text-align: center;">
-                <a href="{verification_url}" class="button">
-                    ✓ Confirmar E-mail
-                </a>
-            </div>
-            
-            <p style="font-size: 14px; color: #6b7280; text-align: center; margin-top: 30px;">
-                Este e-mail foi enviado para confirmar seu cadastro no Vibe.<br>
-                &copy; 2024 Vibe. Todos os direitos reservados.
-            </p>
-        </div>
-    </body>
-    </html>
-    """
-
 @router.post("/send-verification")
 async def send_verification_email(
-    email: str,
-    first_name: str,
-    user_id: int,
+    request: SendVerificationRequest,
     db: Session = Depends(get_db)
 ):
-    """Enviar e-mail de verificação"""
+    """Enviar código de verificação por e-mail"""
     try:
-        # Verificar limite de tentativas (anti-spam)
+        email = request.email
+        first_name = request.first_name
+        user_id = request.user_id
+
+        # Verificar se o usuário existe
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        # Verificar limite de tentativas (anti-spam) - 5 por hora
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         recent_attempts = db.query(EmailVerification).filter(
             EmailVerification.user_id == user_id,
@@ -182,13 +91,20 @@ async def send_verification_email(
             if remaining_time > 0:
                 raise HTTPException(
                     status_code=429,
-                    detail=f"Aguarde {remaining_time} segundos antes de solicitar um novo código"
+                    detail=f"Aguarde {remaining_time} segundos antes de solicitar um novo código",
+                    headers={"Retry-After": str(remaining_time)}
                 )
 
         # Gerar código e token
         verification_code = generate_verification_code()
         verification_token = generate_verification_token()
         expires_at = datetime.utcnow() + timedelta(minutes=5)
+
+        # Remover verificações antigas não utilizadas
+        db.query(EmailVerification).filter(
+            EmailVerification.user_id == user_id,
+            EmailVerification.verified == False
+        ).delete()
 
         # Salvar no banco
         db_verification = EmailVerification(
@@ -201,31 +117,34 @@ async def send_verification_email(
         db.add(db_verification)
         db.commit()
 
-        # Simular envio de e-mail (em produção, configure SMTP real)
-        print(f"📧 E-mail de verificação para {email}")
-        print(f"   Código: {verification_code}")
-        print(f"   Token: {verification_token}")
+        # Log do código (em produção, envie por e-mail real)
+        print(f"📧 Código de verificação para {email}: {verification_code}")
+        print(f"🔗 Token: {verification_token}")
+        print(f"⏰ Expira em: {expires_at}")
         
         return {
             "success": True,
-            "message": "E-mail de verificação enviado com sucesso",
-            "expires_in": 300000,  # 5 minutos
-            "cooldown_ms": 60000   # 1 minuto
+            "message": "Código de verificação enviado com sucesso",
+            "expires_in": 300000,  # 5 minutos em millisegundos
+            "cooldown_ms": 60000   # 1 minuto em millisegundos
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao enviar e-mail: {str(e)}")
+        print(f"❌ Erro ao enviar código: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno do servidor")
 
 @router.post("/verify-code")
 async def verify_code(
-    user_id: int,
-    code: str,
+    request: VerifyCodeRequest,
     db: Session = Depends(get_db)
 ):
     """Verificar código de 6 dígitos"""
     try:
+        user_id = request.user_id
+        code = request.code
+
         # Buscar código válido
         verification = db.query(EmailVerification).filter(
             EmailVerification.user_id == user_id,
@@ -259,15 +178,18 @@ async def verify_code(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao verificar código: {str(e)}")
+        print(f"❌ Erro ao verificar código: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.post("/verify-token")
 async def verify_token(
-    token: str,
+    request: VerifyTokenRequest,
     db: Session = Depends(get_db)
 ):
     """Verificar token do link do e-mail"""
     try:
+        token = request.token
+
         # Buscar token válido
         verification = db.query(EmailVerification).filter(
             EmailVerification.verification_token == token,
@@ -301,7 +223,8 @@ async def verify_token(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao verificar token: {str(e)}")
+        print(f"❌ Erro ao verificar token: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.get("/verification-status/{user_id}")
 async def get_verification_status(
@@ -322,11 +245,11 @@ async def get_verification_status(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao verificar status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.get("/health")
 async def health_check():
-    """Health check do serviço de e-mail"""
+    """Health check do serviço de verificação"""
     return {
         "status": "OK",
         "service": "Email Verification Service",
