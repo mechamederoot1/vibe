@@ -46,13 +46,13 @@ export function StoryAvatar({
 
   const getAvatarUrl = () => {
     if (!avatarUrl) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3B82F6&color=fff`;
+      return null; // Retorna null para mostrar ícone ao invés de URL gerada
     }
-    
+
     if (avatarUrl.startsWith('http')) {
       return avatarUrl;
     }
-    
+
     return `http://localhost:8000${avatarUrl}`;
   };
 
