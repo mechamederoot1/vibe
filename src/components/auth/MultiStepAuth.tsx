@@ -200,6 +200,18 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
           ? `${formData.birthYear}-${formData.birthMonth.padStart(2, "0")}-${formData.birthDay.padStart(2, "0")}`
           : null;
 
+      // Gerar username único baseado no nome
+      const baseUsername = `${formData.firstName.toLowerCase()}${formData.lastName.toLowerCase()}`
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 15);
+      
+      // Adicionar números aleatórios para garantir unicidade
+      const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const username = `${baseUsername}${randomSuffix}`;
+
+      // Gerar display_id único
+      const displayId = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
+
       const registrationData = {
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -208,10 +220,8 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
         gender: formData.gender || null,
         birth_date: birthDate,
         phone: null,
-        username:
-          `${formData.firstName.toLowerCase()}${formData.lastName.toLowerCase()}`
-            .replace(/[^a-z0-9]/g, "")
-            .substring(0, 15),
+        username: username,
+        display_id: displayId,
       };
 
       console.log("Sending registration data:", registrationData);
@@ -225,37 +235,47 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
       });
 
       if (response.ok) {
-        // Auto login após registro
-        const loginResponse = await fetch("http://localhost:8000/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        });
+        const userData = await response.json();
+        console.log("Registration successful, starting email verification process");
+        
+        // Salvar dados temporários para verificação de e-mail
+        localStorage.setItem('pendingVerificationEmail', formData.email);
+        localStorage.setItem('pendingUserData', JSON.stringify({
+          id: userData.id,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email
+        }));
+        localStorage.setItem('pendingPassword', formData.password);
 
-        if (loginResponse.ok) {
-          const loginData = await loginResponse.json();
-
-          // Buscar dados do usuário
-          const userResponse = await fetch("http://localhost:8000/auth/me", {
+        // Enviar e-mail de verificação
+        try {
+          const emailResponse = await fetch('http://localhost:3001/send-verification', {
+            method: 'POST',
             headers: {
-              Authorization: `Bearer ${loginData.access_token}`,
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              email: formData.email,
+              firstName: formData.firstName,
+              userId: userData.id
+            })
           });
 
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            onLogin({
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-              token: loginData.access_token,
-              id: userData.id,
-            });
+          if (emailResponse.ok) {
+            console.log("Verification email sent successfully");
+            // Redirecionar para página de verificação
+            window.location.href = '/verify-email';
+          } else {
+            const emailError = await emailResponse.json();
+            console.warn("Email service unavailable, proceeding anyway:", emailError);
+            // Mesmo se o e-mail falhar, redirecionar para verificação
+            window.location.href = '/verify-email';
           }
+        } catch (emailError) {
+          console.warn("Email service unavailable, proceeding anyway:", emailError);
+          // Mesmo se o e-mail falhar, redirecionar para verificação
+          window.location.href = '/verify-email';
         }
       } else {
         const error = await response.json();

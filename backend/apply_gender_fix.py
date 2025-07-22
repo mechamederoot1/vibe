@@ -17,17 +17,17 @@ try:
     engine = create_engine(DATABASE_URL)
     
     with engine.connect() as connection:
-        print("🔧 Corrigindo coluna gender...")
+        print("🔧 Corrigindo estrutura da tabela users...")
         
-        # Executar ALTER TABLE para expandir a coluna gender
-        connection.execute(text("""
-            ALTER TABLE users 
-            MODIFY COLUMN gender VARCHAR(50) DEFAULT NULL
-        """))
-        
-        connection.commit()
-        
-        print("✅ Coluna gender corrigida para VARCHAR(50)!")
+        # Verificar se a coluna gender existe e corrigir
+        try:
+            connection.execute(text("""
+                ALTER TABLE users 
+                MODIFY COLUMN gender VARCHAR(50) DEFAULT NULL
+            """))
+            print("✅ Coluna gender corrigida para VARCHAR(50)!")
+        except Exception as e:
+            print(f"⚠️ Aviso gender: {e}")
         
         # Verificar se a coluna username existe
         result = connection.execute(text("""
@@ -41,8 +41,9 @@ try:
                 ALTER TABLE users 
                 ADD COLUMN username VARCHAR(50) UNIQUE AFTER email
             """))
-            connection.commit()
             print("✅ Coluna username adicionada!")
+        else:
+            print("✅ Coluna username já existe!")
         
         # Verificar se a coluna display_id existe
         result = connection.execute(text("""
@@ -56,9 +57,27 @@ try:
                 ALTER TABLE users 
                 ADD COLUMN display_id VARCHAR(20) UNIQUE AFTER id
             """))
-            connection.commit()
             print("✅ Coluna display_id adicionada!")
+        else:
+            print("✅ Coluna display_id já existe!")
         
+        # Verificar se a coluna is_verified existe
+        result = connection.execute(text("""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'is_verified'
+        """)).fetchone()
+        
+        if not result:
+            print("🔧 Adicionando coluna is_verified...")
+            connection.execute(text("""
+                ALTER TABLE users 
+                ADD COLUMN is_verified BOOLEAN DEFAULT FALSE AFTER is_active
+            """))
+            print("✅ Coluna is_verified adicionada!")
+        else:
+            print("✅ Coluna is_verified já existe!")
+        
+        connection.commit()
         print("🎉 Todas as correções aplicadas com sucesso!")
         
 except Exception as e:
@@ -67,3 +86,4 @@ except Exception as e:
     print("   ALTER TABLE users MODIFY COLUMN gender VARCHAR(50) DEFAULT NULL;")
     print("   ALTER TABLE users ADD COLUMN username VARCHAR(50) UNIQUE AFTER email;")
     print("   ALTER TABLE users ADD COLUMN display_id VARCHAR(20) UNIQUE AFTER id;")
+    print("   ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE AFTER is_active;")

@@ -234,6 +234,7 @@ export function EnhancedAuth({ onLogin }: AuthProps) {
               gender: formData.gender || null,
               birth_date: formData.birthDate || null,
               phone: formData.phone || null,
+              display_id: Math.floor(Math.random() * 9000000000 + 1000000000).toString(),
             }),
           });
 
@@ -246,8 +247,11 @@ export function EnhancedAuth({ onLogin }: AuthProps) {
               id: userData.id,
               firstName: formData.firstName,
               lastName: formData.lastName,
-              email: formData.email
+              email: formData.email,
+              username: formData.username,
+              display_id: userData.display_id,
             }));
+            localStorage.setItem('pendingPassword', formData.password);
 
             // Enviar e-mail de verificação
             try {
@@ -272,7 +276,8 @@ export function EnhancedAuth({ onLogin }: AuthProps) {
               }
             } catch (emailError) {
               console.error('Erro ao enviar e-mail:', emailError);
-              setErrors({ general: 'Erro ao enviar e-mail de verificação. Tente fazer login.' });
+              // Mesmo se o e-mail falhar, redirecionar para verificação
+              window.location.href = '/verify-email';
             }
           } else {
             const error = await response.json();

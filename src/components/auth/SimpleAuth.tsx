@@ -79,6 +79,10 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           // After registration, send verification email and redirect
           console.log("Registration successful, starting email verification process");
           try {
+            // Gerar username e display_id se não existirem
+            const username = data.username || `${formData.first_name.toLowerCase()}${formData.last_name.toLowerCase()}`.replace(/[^a-z0-9]/g, "").substring(0, 15) + Math.floor(Math.random() * 1000);
+            const displayId = data.display_id || Math.floor(Math.random() * 9000000000 + 1000000000).toString();
+
             // Store user data temporarily for verification process
             localStorage.setItem(
               "pendingVerificationUser",
@@ -87,6 +91,8 @@ export function SimpleAuth({ onLogin }: AuthProps) {
                 firstName: data.first_name,
                 lastName: data.last_name,
                 email: data.email,
+                username: username,
+                display_id: displayId,
               })
             );
             localStorage.setItem("pendingVerificationEmail", data.email);
