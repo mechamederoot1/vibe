@@ -82,16 +82,24 @@ export function StoryAvatar({
         </div>
       )}
 
-      {/* Avatar image */}
-      <img
-        src={getAvatarUrl()}
-        alt={userName}
-        className={`${sizeClasses[size]} rounded-full object-cover ${
-          showIndicator && hasStories && !loading
-            ? 'border-3 border-white relative z-10'
-            : 'border-2 border-gray-200'
-        } shadow-md`}
-      />
+      {/* Avatar image or icon */}
+      {getAvatarUrl() ? (
+        <img
+          src={getAvatarUrl()}
+          alt={userName}
+          className={`${sizeClasses[size]} rounded-full object-cover ${
+            showIndicator && hasStories && !loading
+              ? 'border-3 border-white relative z-10'
+              : 'border-2 border-gray-200'
+          } shadow-md`}
+        />
+      ) : (
+        <div
+          className={`${sizeClasses[size]} rounded-full bg-gray-100 border-2 border-gray-200 shadow-md flex items-center justify-center`}
+        >
+          <User className={`${size === 'small' ? 'w-4 h-4' : size === 'medium' ? 'w-6 h-6' : 'w-12 h-12'} text-gray-400`} />
+        </div>
+      )}
 
       {/* Loading indicator */}
       {loading && showIndicator && (
