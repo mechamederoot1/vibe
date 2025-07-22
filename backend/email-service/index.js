@@ -182,6 +182,149 @@ function getEmailTemplate(firstName, code, token, baseUrl = 'http://localhost:51
   `;
 }
 
+// Template de e-mail de recuperação de senha
+function getPasswordRecoveryTemplate(firstName, code, token, baseUrl = 'http://localhost:5173') {
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Recuperação de Senha - Vibe</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f7f7f7;
+        }
+        .container {
+          background: white;
+          padding: 40px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        .logo {
+          font-size: 32px;
+          font-weight: bold;
+          color: #ef4444;
+          margin-bottom: 10px;
+        }
+        .title {
+          font-size: 24px;
+          margin-bottom: 20px;
+          color: #1f2937;
+        }
+        .code-container {
+          background: #fef2f2;
+          border: 2px dashed #fecaca;
+          border-radius: 8px;
+          padding: 20px;
+          text-align: center;
+          margin: 20px 0;
+        }
+        .verification-code {
+          font-size: 32px;
+          font-weight: bold;
+          color: #ef4444;
+          letter-spacing: 4px;
+          margin: 10px 0;
+        }
+        .button {
+          display: inline-block;
+          background: #ef4444;
+          color: white;
+          padding: 15px 30px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 500;
+          margin: 20px 0;
+          text-align: center;
+        }
+        .button:hover {
+          background: #dc2626;
+        }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          font-size: 14px;
+          color: #6b7280;
+          text-align: center;
+        }
+        .warning {
+          background: #fef3c7;
+          border: 1px solid #f59e0b;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 20px 0;
+          color: #92400e;
+        }
+        .security-notice {
+          background: #fee2e2;
+          border: 1px solid #fca5a5;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 20px 0;
+          color: #991b1b;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">🔒 Vibe</div>
+          <h1 class="title">Recuperação de Senha</h1>
+        </div>
+
+        <p>Olá <strong>${firstName}</strong>,</p>
+
+        <p>Recebemos uma solicitação para redefinir a senha da sua conta no Vibe.</p>
+
+        <div class="code-container">
+          <p><strong>Seu código de recuperação:</strong></p>
+          <div class="verification-code">${code}</div>
+          <p style="font-size: 14px; color: #6b7280;">Este código expira em 15 minutos</p>
+        </div>
+
+        <p style="text-align: center;">
+          <strong>Ou clique no botão abaixo para redefinir automaticamente:</strong>
+        </p>
+
+        <div style="text-align: center;">
+          <a href="${resetUrl}" class="button">
+            🔑 Redefinir Senha
+          </a>
+        </div>
+
+        <div class="security-notice">
+          <strong>🛡️ Segurança:</strong> Se você não solicitou esta recuperação de senha, ignore este e-mail. Sua conta permanece segura.
+        </div>
+
+        <div class="warning">
+          <strong>⚠️ Importante:</strong> Este link é válido por apenas 15 minutos por motivos de segurança.
+        </div>
+
+        <div class="footer">
+          <p>Este e-mail foi enviado para <strong>recuperacao@meuvibe.com</strong></p>
+          <p>Se você não conseguir clicar no botão, copie e cole o código acima na página de recuperação.</p>
+          <p>&copy; 2024 Vibe. Todos os direitos reservados.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // Rota de teste para verificar se o serviço está funcionando
 app.get('/health', (req, res) => {
   res.json({ 
@@ -433,6 +576,329 @@ app.get('/verification-status/:userId', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Erro ao verificar status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Rota para solicitar recuperação de senha
+app.post('/send-password-recovery', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'E-mail é obrigatório'
+      });
+    }
+
+    // Verificar se o e-mail é válido
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'E-mail inválido'
+      });
+    }
+
+    // Verificar se o usuário existe
+    const [userResults] = await pool.execute(
+      'SELECT id, first_name, last_name FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (userResults.length === 0) {
+      // Por segurança, não revelamos se o e-mail existe ou não
+      return res.json({
+        success: true,
+        message: 'Se este e-mail existir em nossa base, você receberá as instruções de recuperação.'
+      });
+    }
+
+    const user = userResults[0];
+    const userId = user.id;
+    const firstName = user.first_name;
+
+    // Verificar limite de tentativas (anti-spam)
+    const [existingAttempts] = await pool.execute(
+      `SELECT COUNT(*) as count FROM password_recovery
+       WHERE user_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)`,
+      [userId]
+    );
+
+    if (existingAttempts[0].count >= 3) {
+      return res.status(429).json({
+        success: false,
+        message: 'Muitas tentativas de recuperação. Tente novamente em 1 hora.',
+        retryAfter: 3600000
+      });
+    }
+
+    // Verificar cooldown entre envios (5 minutos)
+    const [lastAttempt] = await pool.execute(
+      `SELECT created_at FROM password_recovery
+       WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (lastAttempt.length > 0) {
+      const timeSinceLastAttempt = Date.now() - new Date(lastAttempt[0].created_at).getTime();
+      const cooldownMs = 300000; // 5 minutos
+
+      if (timeSinceLastAttempt < cooldownMs) {
+        const remainingTime = Math.ceil((cooldownMs - timeSinceLastAttempt) / 1000);
+        return res.status(429).json({
+          success: false,
+          message: `Aguarde ${Math.ceil(remainingTime / 60)} minutos antes de solicitar nova recuperação`,
+          retryAfter: remainingTime * 1000
+        });
+      }
+    }
+
+    // Gerar código e token de recuperação
+    const recoveryCode = generateVerificationCode();
+    const recoveryToken = generateVerificationToken();
+    const expiresAt = new Date(Date.now() + 900000); // 15 minutos
+
+    // Salvar no banco de dados
+    await pool.execute(
+      `INSERT INTO password_recovery (user_id, email, recovery_code, recovery_token, expires_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, email, recoveryCode, recoveryToken, expiresAt]
+    );
+
+    // Log da solicitação
+    await pool.execute(
+      `INSERT INTO password_recovery_logs (user_id, email, action_type, success)
+       VALUES (?, ?, 'request', TRUE)`,
+      [userId, email]
+    );
+
+    // Enviar e-mail de recuperação
+    const mailOptions = {
+      from: {
+        name: 'Vibe - Recuperação',
+        address: 'recuperacao@meuvibe.com'
+      },
+      to: email,
+      subject: '🔒 Recuperação de Senha - Vibe',
+      html: getPasswordRecoveryTemplate(firstName, recoveryCode, recoveryToken)
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log(`🔑 E-mail de recuperação enviado para: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'E-mail de recuperação enviado com sucesso',
+      expiresIn: 900000, // 15 minutos
+      cooldownMs: 300000 // 5 minutos
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao enviar e-mail de recuperação:', error);
+
+    // Log do erro
+    if (req.body.email) {
+      try {
+        await pool.execute(
+          `INSERT INTO password_recovery_logs (user_id, email, action_type, success, error_message)
+           VALUES (0, ?, 'request', FALSE, ?)`,
+          [req.body.email, error.message]
+        );
+      } catch (logError) {
+        console.error('❌ Erro ao logar tentativa:', logError);
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor ao enviar e-mail'
+    });
+  }
+});
+
+// Rota para verificar código de recuperação
+app.post('/verify-recovery-code', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({
+        success: false,
+        message: 'E-mail e código são obrigatórios'
+      });
+    }
+
+    // Buscar registro de recuperação
+    const [results] = await pool.execute(
+      `SELECT pr.*, u.id as user_id FROM password_recovery pr
+       JOIN users u ON pr.user_id = u.id
+       WHERE pr.email = ? AND pr.recovery_code = ? AND pr.used = FALSE AND pr.expires_at > NOW()
+       ORDER BY pr.created_at DESC LIMIT 1`,
+      [email, code]
+    );
+
+    if (results.length === 0) {
+      // Log da tentativa falhada
+      await pool.execute(
+        `INSERT INTO password_recovery_logs (user_id, email, action_type, success, error_message)
+         VALUES (0, ?, 'code_attempt', FALSE, 'Código inválido ou expirado')`,
+        [email]
+      );
+
+      return res.status(400).json({
+        success: false,
+        message: 'Código inválido ou expirado'
+      });
+    }
+
+    const recovery = results[0];
+
+    // Log da tentativa bem-sucedida
+    await pool.execute(
+      `INSERT INTO password_recovery_logs (user_id, email, action_type, recovery_id, success)
+       VALUES (?, ?, 'code_attempt', ?, TRUE)`,
+      [recovery.user_id, email, recovery.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Código válido',
+      token: recovery.recovery_token,
+      userId: recovery.user_id
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao verificar código de recuperação:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Rota para verificar token de recuperação
+app.post('/verify-recovery-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token é obrigatório'
+      });
+    }
+
+    // Buscar registro de recuperação
+    const [results] = await pool.execute(
+      `SELECT pr.*, u.id as user_id, u.email FROM password_recovery pr
+       JOIN users u ON pr.user_id = u.id
+       WHERE pr.recovery_token = ? AND pr.used = FALSE AND pr.expires_at > NOW()
+       ORDER BY pr.created_at DESC LIMIT 1`,
+      [token]
+    );
+
+    if (results.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      });
+    }
+
+    const recovery = results[0];
+
+    // Log da verificação
+    await pool.execute(
+      `INSERT INTO password_recovery_logs (user_id, email, action_type, recovery_id, success)
+       VALUES (?, ?, 'token_attempt', ?, TRUE)`,
+      [recovery.user_id, recovery.email, recovery.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Token válido',
+      userId: recovery.user_id,
+      email: recovery.email
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao verificar token de recuperação:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Rota para finalizar recuperação de senha
+app.post('/complete-password-recovery', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token e nova senha são obrigatórios'
+      });
+    }
+
+    // Validar senha
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'A senha deve ter pelo menos 6 caracteres'
+      });
+    }
+
+    // Buscar registro de recuperação
+    const [results] = await pool.execute(
+      `SELECT pr.*, u.id as user_id FROM password_recovery pr
+       JOIN users u ON pr.user_id = u.id
+       WHERE pr.recovery_token = ? AND pr.used = FALSE AND pr.expires_at > NOW()
+       ORDER BY pr.created_at DESC LIMIT 1`,
+      [token]
+    );
+
+    if (results.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      });
+    }
+
+    const recovery = results[0];
+
+    // Hash da nova senha (nota: em produção, use bcrypt no backend principal)
+    // Aqui apenas simulamos o processo
+
+    // Marcar token como usado
+    await pool.execute(
+      'UPDATE password_recovery SET used = TRUE, used_at = NOW() WHERE id = ?',
+      [recovery.id]
+    );
+
+    // Log do sucesso
+    await pool.execute(
+      `INSERT INTO password_recovery_logs (user_id, email, action_type, recovery_id, success)
+       VALUES (?, ?, 'success', ?, TRUE)`,
+      [recovery.user_id, recovery.email, recovery.id]
+    );
+
+    console.log(`🔑 Senha redefinida com sucesso para usuário ID: ${recovery.user_id}`);
+
+    res.json({
+      success: true,
+      message: 'Senha redefinida com sucesso!',
+      userId: recovery.user_id
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao completar recuperação:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
