@@ -89,15 +89,54 @@ const EmailVerificationPage: React.FC = () => {
         setMessage('E-mail verificado com sucesso! Redirecionando...');
         setMessageType('success');
         
-        // Atualizar localStorage
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        user.is_verified = true;
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Redirecionar após 2 segundos
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
+        // Limpar dados temporários e fazer login automático
+        const pendingUser = localStorage.getItem('pendingVerificationUser');
+        if (pendingUser) {
+          const user = JSON.parse(pendingUser);
+          const pendingPassword = localStorage.getItem('pendingPassword');
+
+          // Fazer login automático
+          if (pendingPassword) {
+            try {
+              const loginResponse = await fetch('http://localhost:8000/auth/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: user.email,
+                  password: pendingPassword,
+                }),
+              });
+
+              if (loginResponse.ok) {
+                const loginData = await loginResponse.json();
+                localStorage.setItem('token', loginData.access_token);
+              }
+            } catch (error) {
+              console.error('Erro no login automático:', error);
+            }
+          }
+
+          localStorage.removeItem('pendingVerificationUser');
+          localStorage.removeItem('pendingVerificationEmail');
+          localStorage.removeItem('pendingPassword');
+
+          // Redirecionar para home
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        } else {
+          // Atualizar dados do usuário existente
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          user.is_verified = true;
+          localStorage.setItem('user', JSON.stringify(user));
+
+          // Redirecionar após 2 segundos
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
+        }
       }
     } catch (error: any) {
       setMessage(error.response?.data?.message || 'Erro ao verificar token');
