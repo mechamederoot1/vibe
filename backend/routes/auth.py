@@ -42,25 +42,29 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_user)
 
+        # TODO: Re-enable email verification after fixing database issues
+        print(f"✅ User {db_user.id} created successfully: {db_user.email}")
+        print(f"🔍 Debug - User verification status: {db_user.is_verified}")
+
         # Send verification email automatically using sync helper
-        try:
-            from .email_verification import create_verification_record
-            verification_success = create_verification_record(
-                user_id=db_user.id,
-                email=db_user.email,
-                first_name=db_user.first_name,
-                db=db
-            )
-
-            if verification_success:
-                print(f"📧 Verification email record created for {db_user.email}")
-            else:
-                print(f"⚠️ Could not create verification record for {db_user.email}")
-
-        except Exception as email_error:
-            print(f"⚠️ Failed to create verification email: {email_error}")
-            # Don't fail registration if email sending fails
-            pass
+        # try:
+        #     from .email_verification import create_verification_record
+        #     verification_success = create_verification_record(
+        #         user_id=db_user.id,
+        #         email=db_user.email,
+        #         first_name=db_user.first_name,
+        #         db=db
+        #     )
+        #
+        #     if verification_success:
+        #         print(f"📧 Verification email record created for {db_user.email}")
+        #     else:
+        #         print(f"⚠️ Could not create verification record for {db_user.email}")
+        #
+        # except Exception as email_error:
+        #     print(f"⚠️ Failed to create verification email: {email_error}")
+        #     # Don't fail registration if email sending fails
+        #     pass
 
         return db_user
     except Exception as e:
