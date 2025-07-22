@@ -9,6 +9,18 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Validar variáveis de ambiente necessárias
+const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Variáveis de ambiente faltando:', missingVars);
+  console.log('📋 Variáveis disponíveis:', Object.keys(process.env).filter(key => key.startsWith('SMTP')));
+  console.log('📁 Tentando carregar .env de:', path.join(__dirname, '.env'));
+} else {
+  console.log('✅ Todas as variáveis de ambiente carregadas com sucesso');
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -150,7 +162,7 @@ function getEmailTemplate(firstName, code, token, baseUrl = 'http://localhost:51
         
         <p>Olá <strong>${firstName}</strong>,</p>
         
-        <p>Bem-vindo ao Vibe! Para concluir seu cadastro, você precisa confirmar seu endereço de e-mail.</p>
+        <p>Bem-vindo ao Vibe! Para concluir seu cadastro, você precisa confirmar seu endere��o de e-mail.</p>
         
         <div class="code-container">
           <p><strong>Seu código de verificação:</strong></p>
@@ -769,7 +781,7 @@ app.post('/verify-recovery-code', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Código válido',
+      message: 'Código v��lido',
       token: recovery.recovery_token,
       userId: recovery.user_id
     });
