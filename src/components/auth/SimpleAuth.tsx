@@ -48,6 +48,8 @@ export function SimpleAuth({ onLogin }: AuthProps) {
       });
 
       const data = await response.json();
+      console.log("Response data:", data);
+      console.log("Is login:", isLogin);
 
       if (response.ok) {
         if (isLogin) {
