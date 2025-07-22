@@ -205,7 +205,7 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
         last_name: formData.lastName,
         email: formData.email,
         password: formData.password,
-        gender: formData.gender,
+        gender: formData.gender || null,
         birth_date: birthDate,
         phone: null,
         username:
@@ -213,6 +213,8 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
             .replace(/[^a-z0-9]/g, "")
             .substring(0, 15),
       };
+
+      console.log("Sending registration data:", registrationData);
 
       const response = await fetch("http://localhost:8000/auth/register", {
         method: "POST",
@@ -257,6 +259,7 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
         }
       } else {
         const error = await response.json();
+        console.error("Registration error:", error);
         setErrors({ general: error.detail || "Erro ao criar conta" });
       }
     } catch (error) {

@@ -35,9 +35,25 @@ export function SimpleAuth({ onLogin }: AuthProps) {
 
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
-      const payload = isLogin
-        ? { email: formData.email, password: formData.password }
-        : formData;
+      
+      let payload;
+      if (isLogin) {
+        payload = { 
+          email: formData.email, 
+          password: formData.password 
+        };
+      } else {
+        // Para registro, garantir que os campos obrigatórios estão presentes
+        payload = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          password: formData.password,
+          gender: null, // Permitir null para gender
+          birth_date: null, // Permitir null para birth_date
+          phone: null // Permitir null para phone
+        };
+      }
 
       const response = await fetch(`http://localhost:8000${endpoint}`, {
         method: "POST",
@@ -99,9 +115,12 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           }
         }
       } else {
-        setError(data.detail || "Erro ao processar solicitação");
+        const errorData = await response.json();
+        console.error("Registration error:", errorData);
+        setError(errorData.detail || "Erro ao processar solicitação");
       }
     } catch (error) {
+      console.error("Network error:", error);
       setError("Erro de conexão. Tente novamente.");
     } finally {
       setLoading(false);

@@ -276,6 +276,7 @@ export function EnhancedAuth({ onLogin }: AuthProps) {
             }
           } else {
             const error = await response.json();
+            console.error("Registration error:", error);
             setErrors({ general: error.detail || "Erro ao criar conta" });
           }
         }

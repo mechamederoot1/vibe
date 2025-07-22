@@ -19,18 +19,51 @@ try:
     with engine.connect() as connection:
         print("🔧 Corrigindo coluna gender...")
         
-        # Executar ALTER TABLE
+        # Executar ALTER TABLE para expandir a coluna gender
         connection.execute(text("""
             ALTER TABLE users 
-            MODIFY COLUMN gender VARCHAR(20) DEFAULT NULL
+            MODIFY COLUMN gender VARCHAR(50) DEFAULT NULL
         """))
         
         connection.commit()
         
-        print("✅ Coluna gender corrigida para VARCHAR(20)!")
-        print("🎉 Agora o cadastro deve funcionar normalmente.")
+        print("✅ Coluna gender corrigida para VARCHAR(50)!")
+        
+        # Verificar se a coluna username existe
+        result = connection.execute(text("""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'username'
+        """)).fetchone()
+        
+        if not result:
+            print("🔧 Adicionando coluna username...")
+            connection.execute(text("""
+                ALTER TABLE users 
+                ADD COLUMN username VARCHAR(50) UNIQUE AFTER email
+            """))
+            connection.commit()
+            print("✅ Coluna username adicionada!")
+        
+        # Verificar se a coluna display_id existe
+        result = connection.execute(text("""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'display_id'
+        """)).fetchone()
+        
+        if not result:
+            print("🔧 Adicionando coluna display_id...")
+            connection.execute(text("""
+                ALTER TABLE users 
+                ADD COLUMN display_id VARCHAR(20) UNIQUE AFTER id
+            """))
+            connection.commit()
+            print("✅ Coluna display_id adicionada!")
+        
+        print("🎉 Todas as correções aplicadas com sucesso!")
         
 except Exception as e:
     print(f"❌ Erro: {e}")
     print("💡 Tente executar manualmente no MySQL:")
-    print("   ALTER TABLE users MODIFY COLUMN gender VARCHAR(20) DEFAULT NULL;")
+    print("   ALTER TABLE users MODIFY COLUMN gender VARCHAR(50) DEFAULT NULL;")
+    print("   ALTER TABLE users ADD COLUMN username VARCHAR(50) UNIQUE AFTER email;")
+    print("   ALTER TABLE users ADD COLUMN display_id VARCHAR(20) UNIQUE AFTER id;")
