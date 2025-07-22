@@ -5,39 +5,80 @@ const crypto = require('crypto');
 const mysql = require('mysql2/promise');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-// Debug do arquivo .env
-console.log('📁 Diretório atual:', __dirname);
-console.log('📁 Arquivo .env esperado em:', path.join(__dirname, '.env'));
-
-// Tentar diferentes formas de carregar o .env
-const fs = require('fs');
+// Configurar dotenv para carregar o arquivo .env
+const dotenv = require('dotenv');
 const envPath = path.join(__dirname, '.env');
 
+console.log('📁 Tentando carregar .env de:', envPath);
+
+// Verificar se o arquivo .env existe
 if (fs.existsSync(envPath)) {
   console.log('✅ Arquivo .env encontrado');
-
-  // Carregar manualmente se dotenv falhar
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  console.log('📋 Conteúdo do .env:', envContent.split('\n').filter(line => line && !line.startsWith('#')));
-
-  // Parse manual das variáveis
-  envContent.split('\n').forEach(line => {
-    if (line && !line.startsWith('#') && line.includes('=')) {
-      const [key, ...valueParts] = line.split('=');
-      const value = valueParts.join('=').trim();
-      if (key && value) {
-        process.env[key.trim()] = value;
-      }
-    }
-  });
+  const result = dotenv.config({ path: envPath });
+  
+  if (result.error) {
+    console.error('❌ Erro ao carregar .env:', result.error);
+  } else {
+    console.log('✅ Arquivo .env carregado com sucesso');
+  }
 } else {
   console.log('❌ Arquivo .env não encontrado em:', envPath);
+  console.log('📝 Criando arquivo .env com configurações padrão...');
+  
+  const defaultEnvContent = `# Configurações do banco de dados MySQL
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=Evo@000#!
+DB_NAME=vibe
+
+# Configurações SMTP (configure com suas credenciais)
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=587
+SMTP_USER=suporte@meuvibe.com
+SMTP_PASS=Dashwoodi@1995
+SMTP_FROM=no-reply@meuvibe.com
+
+# Configurações de verificação
+VERIFICATION_CODE_EXPIRY=300000
+RESEND_COOLDOWN=60000
+MAX_RESEND_ATTEMPTS=5
+
+# Porta do serviço
+PORT=3001
+`;
+  
+  try {
+    fs.writeFileSync(envPath, defaultEnvContent);
+    console.log('✅ Arquivo .env criado com sucesso');
+    
+    // Recarregar as variáveis
+    dotenv.config({ path: envPath });
+  } catch (writeError) {
+    console.error('❌ Erro ao criar arquivo .env:', writeError);
+  }
 }
+
+// Debug do arquivo .env
+console.log('📋 Variáveis SMTP carregadas:');
+console.log('  - SMTP_HOST:', process.env.SMTP_HOST || 'undefined');
+console.log('  - SMTP_PORT:', process.env.SMTP_PORT || 'undefined');
+console.log('  - SMTP_USER:', process.env.SMTP_USER || 'undefined');
+console.log('  - SMTP_FROM:', process.env.SMTP_FROM || 'undefined');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Debug das variáveis de ambiente após carregamento
+console.log('🔍 Debug das variáveis de ambiente:');
+console.log('  - NODE_ENV:', process.env.NODE_ENV);
+console.log('  - PORT:', process.env.PORT);
+console.log('  - SMTP_HOST:', process.env.SMTP_HOST ? '✅ Definido' : '❌ Não definido');
+console.log('  - SMTP_PORT:', process.env.SMTP_PORT ? '✅ Definido' : '❌ Não definido');
+console.log('  - SMTP_USER:', process.env.SMTP_USER ? '✅ Definido' : '❌ Não definido');
+console.log('  - SMTP_PASS:', process.env.SMTP_PASS ? '✅ Definido' : '❌ Não definido');
+console.log('  - SMTP_FROM:', process.env.SMTP_FROM ? '✅ Definido' : '❌ Não definido');
 
 // Validar variáveis de ambiente necessárias
 const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'];
@@ -45,8 +86,17 @@ const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
   console.error('❌ Variáveis de ambiente faltando:', missingVars);
-  console.log('💡 Crie um arquivo .env na pasta backend/email-service com as configurações necessárias');
-  console.log('📋 Variáveis disponíveis:', Object.keys(process.env).filter(key => key.includes('SMTP') || key.includes('DB')));
+  console.log('💡 Execute o comando: node setup.js');
+  console.log('📝 Ou configure manualmente o arquivo .env');
+  
+  // Tentar usar valores padrão se disponíveis
+  if (!process.env.SMTP_HOST) process.env.SMTP_HOST = 'smtp.hostinger.com';
+  if (!process.env.SMTP_PORT) process.env.SMTP_PORT = '587';
+  if (!process.env.SMTP_USER) process.env.SMTP_USER = 'suporte@meuvibe.com';
+  if (!process.env.SMTP_PASS) process.env.SMTP_PASS = 'Dashwoodi@1995';
+  if (!process.env.SMTP_FROM) process.env.SMTP_FROM = 'no-reply@meuvibe.com';
+  
+  console.log('⚠️  Usando configurações padrão temporariamente');
 } else {
   console.log('✅ Todas as variáveis de ambiente carregadas com sucesso');
 }
