@@ -32,7 +32,7 @@ interface StoriesBarProps {
   refreshTrigger?: number;
 }
 
-export const StoriesBar: React.FC<StoriesBarProps> = ({ userToken, onCreateStory, currentUser }) => {
+export const StoriesBar: React.FC<StoriesBarProps> = ({ userToken, onCreateStory, currentUser, refreshTrigger }) => {
   const [stories, setStories] = useState<Story[]>([]);
   const [groupedStories, setGroupedStories] = useState<{ [key: number]: Story[] }>({});
   const [selectedStoryGroup, setSelectedStoryGroup] = useState<Story[] | null>(null);
