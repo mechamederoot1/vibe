@@ -13,6 +13,32 @@ from schemas import LoginRequest, Token, UserCreate, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+@router.get("/test-db")
+def test_database_connection(db: Session = Depends(get_db)):
+    """Test endpoint to verify database connection and schema"""
+    try:
+        # Test basic database connection
+        result = db.execute("SELECT 1 as test").fetchone()
+        print(f"✅ Database connection test: {result}")
+
+        # Test User table access
+        user_count = db.query(User).count()
+        print(f"✅ User table accessible, count: {user_count}")
+
+        return {
+            "status": "success",
+            "database_connected": True,
+            "user_table_accessible": True,
+            "user_count": user_count
+        }
+    except Exception as e:
+        print(f"❌ Database test failed: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "database_connected": False
+        }
+
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     try:
