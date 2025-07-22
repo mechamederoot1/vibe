@@ -21,6 +21,8 @@ import { PublicProfilePage } from "./pages/PublicProfilePage";
 import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { notificationService } from "./services/NotificationService";
 import { apiCall } from "./config/api";
 
