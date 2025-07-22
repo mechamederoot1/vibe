@@ -29,6 +29,7 @@ interface StoriesBarProps {
     avatar?: string;
     token: string;
   };
+  refreshTrigger?: number;
 }
 
 export const StoriesBar: React.FC<StoriesBarProps> = ({ userToken, onCreateStory, currentUser }) => {
