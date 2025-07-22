@@ -65,12 +65,14 @@ export function StoryAvatar({
     }
   };
 
-  const handleViewPhoto = () => {
+  const handleViewPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowMenu(false);
     if (onViewPhoto) onViewPhoto();
   };
 
-  const handleViewStory = () => {
+  const handleViewStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowMenu(false);
     if (onViewStory) onViewStory();
   };
