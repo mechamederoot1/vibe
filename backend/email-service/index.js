@@ -6,34 +6,46 @@ const mysql = require('mysql2/promise');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+// Debug do arquivo .env
+console.log('📁 Diretório atual:', __dirname);
+console.log('📁 Arquivo .env esperado em:', path.join(__dirname, '.env'));
+
+// Tentar diferentes formas de carregar o .env
+const fs = require('fs');
+const envPath = path.join(__dirname, '.env');
+
+if (fs.existsSync(envPath)) {
+  console.log('✅ Arquivo .env encontrado');
+
+  // Carregar manualmente se dotenv falhar
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  console.log('📋 Conteúdo do .env:', envContent.split('\n').filter(line => line && !line.startsWith('#')));
+
+  // Parse manual das variáveis
+  envContent.split('\n').forEach(line => {
+    if (line && !line.startsWith('#') && line.includes('=')) {
+      const [key, ...valueParts] = line.split('=');
+      const value = valueParts.join('=').trim();
+      if (key && value) {
+        process.env[key.trim()] = value;
+      }
+    }
+  });
+} else {
+  console.log('❌ Arquivo .env não encontrado em:', envPath);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Fallback para configurações se .env não carregar
-if (!process.env.SMTP_HOST) {
-  console.log('⚙️ Aplicando configurações fallback...');
-  process.env.SMTP_HOST = 'smtp.hostinger.com';
-  process.env.SMTP_PORT = '587';
-  process.env.SMTP_USER = 'suporte@meuvibe.com';
-  process.env.SMTP_PASS = 'Dashwoodi@1995';
-  process.env.SMTP_FROM = 'no-reply@meuvibe.com';
-  process.env.VERIFICATION_CODE_EXPIRY = '300000';
-  process.env.RESEND_COOLDOWN = '60000';
-  process.env.MAX_RESEND_ATTEMPTS = '5';
-  process.env.DB_HOST = '127.0.0.1';
-  process.env.DB_PORT = '3306';
-  process.env.DB_USER = 'root';
-  process.env.DB_PASSWORD = 'Evo@000#!';
-  process.env.DB_NAME = 'vibe';
-}
 
 // Validar variáveis de ambiente necessárias
 const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'];
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.error('❌ Variáveis de ambiente ainda faltando:', missingVars);
-  console.log('📋 Variáveis disponíveis:', Object.keys(process.env).filter(key => key.startsWith('SMTP')));
+  console.error('❌ Variáveis de ambiente faltando:', missingVars);
+  console.log('💡 Crie um arquivo .env na pasta backend/email-service com as configurações necessárias');
+  console.log('📋 Variáveis disponíveis:', Object.keys(process.env).filter(key => key.includes('SMTP') || key.includes('DB')));
 } else {
   console.log('✅ Todas as variáveis de ambiente carregadas com sucesso');
 }
