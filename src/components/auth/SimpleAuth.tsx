@@ -248,6 +248,18 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             </button>
           </form>
 
+          {/* Forgot Password Link */}
+          {isLogin && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => window.location.href = '/forgot-password'}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          )}
+
           {/* Toggle Auth Mode */}
           <div className="mt-6 text-center">
             <p className="text-gray-600 text-sm md:text-base">
