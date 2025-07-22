@@ -70,6 +70,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
               })
             );
             localStorage.setItem("pendingVerificationEmail", data.email);
+            localStorage.setItem("pendingPassword", formData.password);
 
             // Send verification email
             await emailVerificationService.sendVerificationEmail({
