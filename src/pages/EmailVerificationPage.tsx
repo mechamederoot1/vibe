@@ -181,10 +181,7 @@ const EmailVerificationPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/verify-code', {
-        userId: userData.id,
-        code: codeToVerify
-      });
+      const response = await axios.post(`http://localhost:8000/email-verification/verify-code?user_id=${userData.id}&code=${codeToVerify}`);
 
       if (response.data.success) {
         setIsVerified(true);
