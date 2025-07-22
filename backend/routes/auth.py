@@ -17,8 +17,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def test_database_connection(db: Session = Depends(get_db)):
     """Test endpoint to verify database connection and schema"""
     try:
+        from sqlalchemy import text
+
         # Test basic database connection
-        result = db.execute("SELECT 1 as test").fetchone()
+        result = db.execute(text("SELECT 1 as test")).fetchone()
         print(f"✅ Database connection test: {result}")
 
         # Test User table access
