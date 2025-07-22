@@ -133,7 +133,7 @@ const EmailVerificationPage: React.FC = () => {
 
   const verifyCode = async (code?: string) => {
     const codeToVerify = code || verificationCode.join('');
-    
+
     if (codeToVerify.length !== 6) {
       setMessage('Por favor, insira o código completo de 6 dígitos');
       setMessageType('error');
@@ -151,16 +151,29 @@ const EmailVerificationPage: React.FC = () => {
         setIsVerified(true);
         setMessage('E-mail verificado com sucesso! Redirecionando...');
         setMessageType('success');
-        
-        // Atualizar localStorage
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        user.is_verified = true;
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Redirecionar após 2 segundos
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
+
+        // Limpar dados temporários e fazer login automático
+        const pendingUser = localStorage.getItem('pendingVerificationUser');
+        if (pendingUser) {
+          const user = JSON.parse(pendingUser);
+          localStorage.removeItem('pendingVerificationUser');
+          localStorage.removeItem('pendingVerificationEmail');
+
+          // Redirecionar para home - usuário será automaticamente logado pela resposta do backend
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        } else {
+          // Atualizar dados do usuário existente
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          user.is_verified = true;
+          localStorage.setItem('user', JSON.stringify(user));
+
+          // Redirecionar após 2 segundos
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
+        }
       }
     } catch (error: any) {
       setMessage(error.response?.data?.message || 'Código inválido ou expirado');
