@@ -16,31 +16,76 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     try:
+        print(f"🔍 Registration attempt for email: {user.email}")
+
         # Verifica se o usuário já existe
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
+            print(f"❌ Email already registered: {user.email}")
             raise HTTPException(status_code=400, detail="Email already registered")
 
+        print(f"✅ Email available: {user.email}")
+
         # Cria novo usuário
-        hashed_password = hash_password(user.password)
+        try:
+            hashed_password = hash_password(user.password)
+            print(f"✅ Password hashed successfully")
+        except Exception as hash_error:
+            print(f"❌ Password hashing failed: {hash_error}")
+            raise Exception(f"Password hashing error: {hash_error}")
 
         # Converte birth_date string para objeto date
-        birth_date_obj = user.get_birth_date_as_date() if user.birth_date else None
+        try:
+            birth_date_obj = user.get_birth_date_as_date() if user.birth_date else None
+            print(f"✅ Birth date processed: {birth_date_obj}")
+        except Exception as date_error:
+            print(f"❌ Birth date conversion failed: {date_error}")
+            birth_date_obj = None
 
-        db_user = User(
-            first_name=user.first_name,
-            last_name=user.last_name,
-            email=user.email,
-            password_hash=hashed_password,
-            gender=user.gender,
-            birth_date=birth_date_obj,
-            phone=user.phone,
-            is_active=True,
-            is_verified=False  # Explicitly set as not verified
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
+        print(f"🔍 Creating user with data:")
+        print(f"   Name: {user.first_name} {user.last_name}")
+        print(f"   Email: {user.email}")
+        print(f"   Gender: {user.gender}")
+        print(f"   Birth date: {birth_date_obj}")
+        print(f"   Phone: {user.phone}")
+
+        try:
+            db_user = User(
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email=user.email,
+                password_hash=hashed_password,
+                gender=user.gender,
+                birth_date=birth_date_obj,
+                phone=user.phone,
+                is_active=True,
+                is_verified=False  # Explicitly set as not verified
+            )
+            print(f"✅ User object created")
+        except Exception as user_creation_error:
+            print(f"❌ User object creation failed: {user_creation_error}")
+            raise Exception(f"User creation error: {user_creation_error}")
+
+        try:
+            db.add(db_user)
+            print(f"✅ User added to session")
+        except Exception as add_error:
+            print(f"❌ Failed to add user to session: {add_error}")
+            raise Exception(f"Session add error: {add_error}")
+
+        try:
+            db.commit()
+            print(f"✅ Database commit successful")
+        except Exception as commit_error:
+            print(f"❌ Database commit failed: {commit_error}")
+            raise Exception(f"Database commit error: {commit_error}")
+
+        try:
+            db.refresh(db_user)
+            print(f"✅ User refreshed from database")
+        except Exception as refresh_error:
+            print(f"❌ Failed to refresh user: {refresh_error}")
+            raise Exception(f"Refresh error: {refresh_error}")
 
         # TODO: Re-enable email verification after fixing database issues
         print(f"✅ User {db_user.id} created successfully: {db_user.email}")
