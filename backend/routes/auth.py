@@ -50,18 +50,23 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         print(f"   Phone: {user.phone}")
 
         try:
+            # Start with minimal required fields only
             db_user = User(
                 first_name=user.first_name,
                 last_name=user.last_name,
                 email=user.email,
-                password_hash=hashed_password,
-                gender=user.gender,
-                birth_date=birth_date_obj,
-                phone=user.phone,
-                is_active=True,
-                is_verified=False  # Explicitly set as not verified
+                password_hash=hashed_password
             )
-            print(f"✅ User object created")
+
+            # Add optional fields if they exist
+            if user.gender:
+                db_user.gender = user.gender
+            if birth_date_obj:
+                db_user.birth_date = birth_date_obj
+            if user.phone:
+                db_user.phone = user.phone
+
+            print(f"✅ User object created with required fields")
         except Exception as user_creation_error:
             print(f"❌ User object creation failed: {user_creation_error}")
             raise Exception(f"User creation error: {user_creation_error}")
