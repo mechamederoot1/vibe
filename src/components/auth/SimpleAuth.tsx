@@ -84,6 +84,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             });
 
             // Redirect to verification page
+            console.log("Redirecting to /verify-email");
             window.location.href = "/verify-email";
           } catch (emailError) {
             // Even if email fails, still redirect to verification page
@@ -228,7 +229,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
                     value={formData.confirm_password}
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-                    placeholder="••��•••••"
+                    placeholder="••••••••"
                     required
                   />
                 </div>
