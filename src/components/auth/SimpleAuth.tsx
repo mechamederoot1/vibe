@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { Logo } from "../ui/Logo";
+import { emailVerificationService } from "../../services/EmailVerificationService";
 
 interface AuthProps {
   onLogin: (userData: { name: string; email: string; token: string }) => void;
