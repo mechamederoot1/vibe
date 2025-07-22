@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const EMAIL_SERVICE_BASE_URL = 'http://localhost:3001';
+const EMAIL_SERVICE_BASE_URL = 'http://localhost:8000/email-verification';
 
 export interface SendVerificationRequest {
   email: string;
@@ -43,9 +43,25 @@ class EmailVerificationService {
    */
   async sendVerificationEmail(data: SendVerificationRequest): Promise<VerificationResponse> {
     try {
-      const response = await axios.post(`${this.baseURL}/send-verification`, data);
+      const payload = {
+        email: data.email,
+        first_name: data.firstName,
+        user_id: data.userId
+      };
+      
+      console.log('🔄 Enviando código de verificação:', payload);
+      
+      const response = await axios.post(`${this.baseURL}/send-verification`, payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Código enviado com sucesso:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ Erro ao enviar código:', error.response?.data || error.message);
+      
       if (error.response?.data) {
         throw error.response.data;
       }
@@ -61,9 +77,24 @@ class EmailVerificationService {
    */
   async verifyCode(data: VerifyCodeRequest): Promise<VerificationResponse> {
     try {
-      const response = await axios.post(`${this.baseURL}/verify-code`, data);
+      const payload = {
+        user_id: data.userId,
+        code: data.code
+      };
+      
+      console.log('🔄 Verificando código:', payload);
+      
+      const response = await axios.post(`${this.baseURL}/verify-code`, payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Código verificado:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ Erro ao verificar código:', error.response?.data || error.message);
+      
       if (error.response?.data) {
         throw error.response.data;
       }
@@ -79,9 +110,23 @@ class EmailVerificationService {
    */
   async verifyToken(data: VerifyTokenRequest): Promise<VerificationResponse> {
     try {
-      const response = await axios.post(`${this.baseURL}/verify-token`, data);
+      const payload = {
+        token: data.token
+      };
+      
+      console.log('🔄 Verificando token:', payload);
+      
+      const response = await axios.post(`${this.baseURL}/verify-token`, payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Token verificado:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ Erro ao verificar token:', error.response?.data || error.message);
+      
       if (error.response?.data) {
         throw error.response.data;
       }
@@ -123,24 +168,6 @@ class EmailVerificationService {
         service: 'Email Service',
         timestamp: new Date().toISOString(),
         error: error.message
-      };
-    }
-  }
-
-  /**
-   * Enviar e-mail de teste
-   */
-  async sendTestEmail(): Promise<VerificationResponse> {
-    try {
-      const response = await axios.post(`${this.baseURL}/test-email`);
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.data) {
-        throw error.response.data;
-      }
-      throw {
-        success: false,
-        message: 'Erro ao enviar e-mail de teste'
       };
     }
   }

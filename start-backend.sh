@@ -1,32 +1,24 @@
 #!/bin/bash
 
-echo "Starting Backend Server..."
+echo "🚀 Iniciando Vibe Backend..."
 echo "=========================="
 
 # Check if Python is available
 if ! command -v python3 &> /dev/null; then
-    echo "Error: Python 3 is not installed"
-    exit 1
-fi
-
-# Check if pip is available
-if ! command -v pip3 &> /dev/null; then
-    echo "Error: pip3 is not installed"
+    echo "❌ Erro: Python 3 não está instalado"
     exit 1
 fi
 
 # Navigate to backend directory
 cd backend
 
-# Install dependencies if requirements.txt exists
-if [ -f "requirements.txt" ]; then
-    echo "Installing dependencies..."
-    pip3 install -r requirements.txt
-fi
+# Inicializar banco de dados
+echo "🗄️ Verificando banco de dados..."
+python3 init_database.py
 
 # Start the backend server
-echo "Starting FastAPI server on http://localhost:8000"
-echo "Press Ctrl+C to stop the server"
+echo "🌟 Iniciando servidor FastAPI em http://localhost:8000"
+echo "Pressione Ctrl+C para parar o servidor"
 echo "========================================"
 
-python3 run.py
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload

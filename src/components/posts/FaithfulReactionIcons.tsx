@@ -1,281 +1,106 @@
 import React from "react";
 
-interface ReactionIconProps {
-  className?: string;
-  animate?: boolean;
-}
-
-export const LikeIcon: React.FC<ReactionIconProps> = ({
-  className = "",
-  animate = false,
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    className={`${className} ${animate ? "animate-pulse" : ""}`}
-    fill="none"
-  >
-    <defs>
-      <linearGradient
-        id="like-gradient-faithful"
-        x1="0%"
-        y1="0%"
-        x2="100%"
-        y2="100%"
-      >
-        <stop offset="0%" stopColor="#1877F2" />
-        <stop offset="100%" stopColor="#166FE5" />
-      </linearGradient>
-    </defs>
-    <circle
-      cx="16"
-      cy="16"
-      r="14"
-      fill="#1877F2"
-      stroke="#166FE5"
-      strokeWidth="1"
-    />
-    <path
-      d="M8 18c0-1.5 1-3 3-3 1 0 1.5.5 2 1 .5-1.5 1.5-2 3-2s3 1.5 3 3v4c0 1-1 2-2 2H10c-1 0-2-1-2-2v-3z"
-      fill="white"
-    />
-    <path d="M16 14v-2c0-1 1-2 2-2s2 1 2 2c0 .5-.5 1-1 1h-3z" fill="white" />
-  </svg>
-);
-
-// Keep the elegant heart as user requested
-export const LoveIcon: React.FC<ReactionIconProps> = ({
-  className = "",
-  animate = false,
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    className={`${className} ${animate ? "animate-bounce" : ""}`}
-    fill="none"
-  >
-    <defs>
-      <linearGradient
-        id="love-gradient-faithful"
-        x1="0%"
-        y1="0%"
-        x2="100%"
-        y2="100%"
-      >
-        <stop offset="0%" stopColor="#FF5722" />
-        <stop offset="50%" stopColor="#F44336" />
-        <stop offset="100%" stopColor="#E91E63" />
-      </linearGradient>
-      <filter id="love-shadow">
-        <feDropShadow
-          dx="0"
-          dy="2"
-          stdDeviation="3"
-          floodColor="#E91E63"
-          floodOpacity="0.4"
-        />
-      </filter>
-    </defs>
-    <circle
-      cx="16"
-      cy="16"
-      r="15"
-      fill="url(#love-gradient-faithful)"
-      filter="url(#love-shadow)"
-    />
-    <path
-      d="M16 25c0 0-7-4.5-7-9.5 0-2.5 2-4.5 4.5-4.5 1.5 0 2.5 1 2.5 1s1-1 2.5-1c2.5 0 4.5 2 4.5 4.5 0 5-7 9.5-7 9.5z"
-      fill="white"
-    />
-  </svg>
-);
-
-export const HahaIcon: React.FC<ReactionIconProps> = ({
-  className = "",
-  animate = false,
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    className={`${className} ${animate ? "animate-bounce" : ""}`}
-    fill="none"
-  >
-    <circle
-      cx="16"
-      cy="16"
-      r="14"
-      fill="#FFDA44"
-      stroke="#FFD93D"
-      strokeWidth="1"
-    />
-
-    {/* Eyes - X shape for laughing */}
-    <path
-      d="M11 11l2 2m-2 0l2-2"
-      stroke="#333"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-    <path
-      d="M19 11l2 2m-2 0l2-2"
-      stroke="#333"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-
-    {/* Big smile */}
-    <path
-      d="M10 18c0 0 2.5 4 6 4s6-4 6-4"
-      stroke="#333"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Tear of joy */}
-    <circle cx="8" cy="16" r="1.5" fill="#6BB6FF" opacity="0.8" />
-  </svg>
-);
-
-export const WowIcon: React.FC<ReactionIconProps> = ({
-  className = "",
-  animate = false,
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    className={`${className} ${animate ? "animate-pulse" : ""}`}
-    fill="none"
-  >
-    <circle
-      cx="16"
-      cy="16"
-      r="14"
-      fill="#FFDA44"
-      stroke="#FFD93D"
-      strokeWidth="1"
-    />
-
-    {/* Wide surprised eyes */}
-    <circle cx="11" cy="12" r="2.5" fill="#333" />
-    <circle cx="21" cy="12" r="2.5" fill="#333" />
-
-    {/* Small surprised mouth */}
-    <ellipse cx="16" cy="20" rx="2" ry="3" fill="#333" />
-
-    {/* Raised eyebrows */}
-    <path
-      d="M8 8c1 0 2 .5 3 1"
-      stroke="#333"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-    <path
-      d="M24 8c-1 0-2 .5-3 1"
-      stroke="#333"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-export const SadIcon: React.FC<ReactionIconProps> = ({
-  className = "",
-  animate = false,
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    className={`${className} ${animate ? "animate-pulse" : ""}`}
-    fill="none"
-  >
-    <circle
-      cx="16"
-      cy="16"
-      r="14"
-      fill="#FFDA44"
-      stroke="#FFD93D"
-      strokeWidth="1"
-    />
-
-    {/* Sad eyes */}
-    <ellipse cx="11" cy="12" rx="1.5" ry="1" fill="#333" />
-    <ellipse cx="21" cy="12" rx="1.5" ry="1" fill="#333" />
-
-    {/* Downturned mouth */}
-    <path
-      d="M10 20c0 0 2-2 6-2s6 2 6 2"
-      stroke="#333"
-      strokeWidth="2"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Single tear */}
-    <ellipse cx="22" cy="16" rx="1" ry="2.5" fill="#6BB6FF" />
-
-    {/* Sad eyebrows */}
-    <path
-      d="M8 9c1 1 2 1 3 1"
-      stroke="#333"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <path
-      d="M24 9c-1 1-2 1-3 1"
-      stroke="#333"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-export const AngryIcon: React.FC<ReactionIconProps> = ({
-  className = "",
-  animate = false,
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    className={`${className} ${animate ? "animate-pulse" : ""}`}
-    fill="none"
-  >
-    <circle
-      cx="16"
-      cy="16"
-      r="14"
-      fill="#F25022"
-      stroke="#E54B2B"
-      strokeWidth="1"
-    />
-
-    {/* Angry eyes */}
-    <ellipse cx="11" cy="13" rx="1.5" ry="1" fill="#fff" />
-    <ellipse cx="21" cy="13" rx="1.5" ry="1" fill="#fff" />
-
-    {/* Angry frown */}
-    <path
-      d="M10 19c0 0 2-1.5 6-1.5s6 1.5 6 1.5"
-      stroke="#fff"
-      strokeWidth="2"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* Angry eyebrows */}
-    <path d="M8 8l4 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-    <path d="M24 8l-4 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-
-    {/* Steam lines */}
-    <path
-      d="M6 6l1 2M26 6l-1 2"
-      stroke="#fff"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      opacity="0.8"
-    />
-  </svg>
-);
-
+// Ícones de reação fiéis ao Facebook original
 export const faithfulReactionIcons = {
-  like: LikeIcon,
-  love: LoveIcon,
-  haha: HahaIcon,
-  wow: WowIcon,
-  sad: SadIcon,
-  angry: AngryIcon,
+  like: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 016 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75 2.25 2.25 0 012.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558-.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23h-.777zM2.331 10.977a11.969 11.969 0 00-.831 4.398 12 12 0 00.52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 01-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227z"
+        fill="#4F46E5"
+      />
+    </svg>
+  ),
+
+  love: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"
+        fill="#EF4444"
+      />
+    </svg>
+  ),
+
+  haha: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-yellow-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      😂
+    </div>
+  ),
+
+  wow: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-yellow-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      😮
+    </div>
+  ),
+
+  sad: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-yellow-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      😢
+    </div>
+  ),
+
+  angry: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-red-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      😡
+    </div>
+  ),
+
+  care: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-yellow-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      ��
+    </div>
+  ),
+
+  pride: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-purple-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      🏳️‍🌈
+    </div>
+  ),
+
+  grateful: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-green-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      🙏
+    </div>
+  ),
+
+  celebrating: ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+    <div
+      className={`${className} flex items-center justify-center rounded-full bg-yellow-500 text-white`}
+      style={{ width: size, height: size, fontSize: size * 0.6 }}
+    >
+      🎉
+    </div>
+  ),
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ResponsiveCreatePostModal } from "./modals/ResponsiveCreatePostModal";
 import { ResponsiveCreateStoryModal } from "./modals/ResponsiveCreateStoryModal";
 import { PostCard } from "./posts/PostCard";
-import { EnhancedStoriesBar } from "./stories/EnhancedStoriesBar";
+import { StoriesBar } from "./stories/StoriesBar";
 import { createStoryWithFile } from "./stories/StoryUploadHelper";
 import { apiCall } from "../config/api";
 
@@ -237,7 +237,7 @@ export const Feed: React.FC<FeedProps> = ({ user }) => {
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Stories Bar */}
-      <EnhancedStoriesBar
+      <StoriesBar
         userToken={user.token}
         onCreateStory={() => setShowCreateStory(true)}
         currentUser={user}
