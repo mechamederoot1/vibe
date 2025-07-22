@@ -84,21 +84,6 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
 
-# Criar tabelas no banco de dados
-@app.on_event("startup")
-async def startup_event():
-    """Eventos executados na inicialização"""
-    print("🚀 Iniciando Vibe Social Network API...")
-    
-    # Criar tabelas se não existirem
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("✅ Tabelas do banco verificadas/criadas!")
-    except Exception as e:
-        print(f"⚠️ Erro ao criar tabelas: {e}")
-    
-    print("🌟 API pronta para uso!")
-
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
