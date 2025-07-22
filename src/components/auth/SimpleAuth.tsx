@@ -168,7 +168,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             // Fallback: still redirect to verification page
             alert('Conta criada! Redirecionando para verificação...');
             setTimeout(() => {
-              window.location.href = "/verify-email";
+              navigate('/verify-email');
             }, 100);
           }
         }
