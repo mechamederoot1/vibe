@@ -238,43 +238,41 @@ export function EnhancedAuth({ onLogin }: AuthProps) {
           });
 
           if (response.ok) {
-            // Auto login after registration
-            const loginResponse = await fetch(
-              "http://localhost:8000/auth/login",
-              {
-                method: "POST",
+            const userData = await response.json();
+
+            // Salvar dados temporários para verificação de e-mail
+            localStorage.setItem('pendingVerificationEmail', formData.email);
+            localStorage.setItem('pendingUserData', JSON.stringify({
+              id: userData.id,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email
+            }));
+
+            // Enviar e-mail de verificação
+            try {
+              const emailResponse = await fetch('http://localhost:3001/send-verification', {
+                method: 'POST',
                 headers: {
-                  "Content-Type": "application/json",
+                  'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                   email: formData.email,
-                  password: formData.password,
-                }),
-              },
-            );
+                  firstName: formData.firstName,
+                  userId: userData.id
+                })
+              });
 
-            if (loginResponse.ok) {
-              const data = await loginResponse.json();
-
-              // Get user details
-              const userResponse = await fetch(
-                "http://localhost:8000/auth/me",
-                {
-                  headers: {
-                    Authorization: `Bearer ${data.access_token}`,
-                  },
-                },
-              );
-
-              if (userResponse.ok) {
-                const userData = await userResponse.json();
-                onLogin({
-                  name: `${formData.firstName} ${formData.lastName}`,
-                  email: formData.email,
-                  token: data.access_token,
-                  id: userData.id,
-                });
+              if (emailResponse.ok) {
+                // Redirecionar para página de verificação
+                window.location.href = '/verify-email';
+              } else {
+                const emailError = await emailResponse.json();
+                setErrors({ general: emailError.message || 'Erro ao enviar e-mail de verificação' });
               }
+            } catch (emailError) {
+              console.error('Erro ao enviar e-mail:', emailError);
+              setErrors({ general: 'Erro ao enviar e-mail de verificação. Tente fazer login.' });
             }
           } else {
             const error = await response.json();
