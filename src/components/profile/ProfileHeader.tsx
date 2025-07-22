@@ -473,7 +473,12 @@ export function ProfileHeader({
                 }
                 alt={user.name}
                 className="w-32 h-32 rounded-full border-4 border-white shadow-lg cursor-pointer"
-                onClick={() => user.avatar && setShowPhotoViewer(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (user.avatar) {
+                    setShowPhotoViewer(true);
+                  }
+                }}
               />
 
               {/* Avatar Upload Button */}
@@ -481,7 +486,10 @@ export function ProfileHeader({
                 <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 rounded-full flex items-center justify-center transition-all group-hover:bg-opacity-40">
                   <div className="flex space-x-2 transform scale-0 group-hover:scale-100 transition-transform">
                     <button
-                      onClick={() => avatarInputRef.current?.click()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        avatarInputRef.current?.click();
+                      }}
                       disabled={isUploadingAvatar}
                       className="bg-white bg-opacity-90 hover:bg-opacity-100 p-2 rounded-full transition-colors"
                       title="Alterar foto"
@@ -494,7 +502,8 @@ export function ProfileHeader({
                     </button>
                     {user.avatar && (
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setPhotoManagementTab("profile");
                           setShowPhotoManagement(true);
                         }}
