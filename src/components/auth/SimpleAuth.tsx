@@ -57,21 +57,34 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             token: data.access_token,
           });
         } else {
-          // After registration, redirect to email verification
-          // Store user data temporarily for verification process
-          localStorage.setItem(
-            "pendingVerificationUser",
-            JSON.stringify({
-              id: data.id,
-              firstName: data.first_name,
-              lastName: data.last_name,
-              email: data.email,
-            })
-          );
-          localStorage.setItem("pendingVerificationEmail", data.email);
+          // After registration, send verification email and redirect
+          try {
+            // Store user data temporarily for verification process
+            localStorage.setItem(
+              "pendingVerificationUser",
+              JSON.stringify({
+                id: data.id,
+                firstName: data.first_name,
+                lastName: data.last_name,
+                email: data.email,
+              })
+            );
+            localStorage.setItem("pendingVerificationEmail", data.email);
 
-          // Redirect to verification page
-          window.location.href = "/verify-email";
+            // Send verification email
+            await emailVerificationService.sendVerificationEmail({
+              email: data.email,
+              firstName: data.first_name,
+              userId: data.id,
+            });
+
+            // Redirect to verification page
+            window.location.href = "/verify-email";
+          } catch (emailError) {
+            // Even if email fails, still redirect to verification page
+            console.error("Erro ao enviar e-mail de verificação:", emailError);
+            window.location.href = "/verify-email";
+          }
         }
       } else {
         setError(data.detail || "Erro ao processar solicitação");
