@@ -13,36 +13,115 @@ from schemas import LoginRequest, Token, UserCreate, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", response_model=UserResponse)
+@router.get("/test-db")
+def test_database_connection(db: Session = Depends(get_db)):
+    """Test endpoint to verify database connection and schema"""
+    try:
+        from sqlalchemy import text
+
+        # Test basic database connection
+        result = db.execute(text("SELECT 1 as test")).fetchone()
+        print(f"✅ Database connection test: {result}")
+
+        # Test User table access
+        user_count = db.query(User).count()
+        print(f"✅ User table accessible, count: {user_count}")
+
+        return {
+            "status": "success",
+            "database_connected": True,
+            "user_table_accessible": True,
+            "user_count": user_count
+        }
+    except Exception as e:
+        print(f"❌ Database test failed: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "database_connected": False
+        }
+
+@router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
     try:
+        print(f"🔍 Registration attempt for email: {user.email}")
+        print(f"🔍 Received data: {user.dict()}")
+
+        # Validate required fields
+        if not user.first_name or not user.first_name.strip():
+            raise HTTPException(status_code=400, detail="Nome é obrigatório")
+        if not user.last_name or not user.last_name.strip():
+            raise HTTPException(status_code=400, detail="Sobrenome é obrigatório")
+        if not user.email or not user.email.strip():
+            raise HTTPException(status_code=400, detail="E-mail é obrigatório")
+        if not user.password or len(user.password) < 6:
+            raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
+
+        print(f"✅ Required fields validated")
+
         # Verifica se o usuário já existe
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
+            print(f"❌ Email already registered: {user.email}")
             raise HTTPException(status_code=400, detail="Email already registered")
-        
-        # Cria novo usuário
+
+        print(f"✅ Email available: {user.email}")
+
+        # Hash password
         hashed_password = hash_password(user.password)
-        
-        # Converte birth_date string para objeto date
-        birth_date_obj = user.get_birth_date_as_date() if user.birth_date else None
-        
+        print(f"✅ Password hashed successfully")
+
+        # Process birth date
+        birth_date_obj = None
+        if user.birth_date:
+            try:
+                birth_date_obj = user.get_birth_date_as_date()
+                print(f"✅ Birth date processed: {birth_date_obj}")
+            except Exception as date_error:
+                print(f"⚠️ Birth date conversion failed: {date_error}")
+
+        # Create user with only required fields first
         db_user = User(
             first_name=user.first_name,
             last_name=user.last_name,
             email=user.email,
-            password_hash=hashed_password,
-            gender=user.gender,
-            birth_date=birth_date_obj,
-            phone=user.phone,
-            is_active=True
+            password_hash=hashed_password
         )
+
+        # Add optional fields
+        if user.gender:
+            db_user.gender = user.gender
+        if birth_date_obj:
+            db_user.birth_date = birth_date_obj
+        if user.phone:
+            db_user.phone = user.phone
+
+        print(f"✅ User object created")
+
+        # Save to database
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        
-        return db_user
+
+        print(f"✅ User {db_user.id} created successfully!")
+
+        # Return minimal response to avoid serialization issues
+        return {
+            "id": db_user.id,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name,
+            "email": db_user.email,
+            "is_active": db_user.is_active,
+            "is_verified": getattr(db_user, 'is_verified', False),
+            "created_at": db_user.created_at.isoformat(),
+            "last_seen": db_user.last_seen.isoformat()
+        }
+
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
+        print(f"❌ Unexpected error: {type(e).__name__}: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno do servidor: {str(e)}")
 

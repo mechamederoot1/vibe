@@ -50,6 +50,61 @@ def generate_verification_token():
     """Gera token de verificação"""
     return secrets.token_hex(32)
 
+def create_verification_record(user_id: int, email: str, first_name: str, db: Session) -> bool:
+    """
+    Sync helper function to create verification record during registration
+    Returns True if successful, False otherwise
+    """
+    try:
+        print(f"📧 Creating verification record for user {user_id}: {email}")
+
+        # Verificar limite de tentativas (anti-spam) - 5 por hora
+        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        recent_attempts = db.query(EmailVerification).filter(
+            EmailVerification.user_id == user_id,
+            EmailVerification.created_at > one_hour_ago
+        ).count()
+
+        if recent_attempts >= 5:
+            print(f"❌ Too many attempts for user {user_id}")
+            return False
+
+        # Gerar código e token
+        verification_code = generate_verification_code()
+        verification_token = generate_verification_token()
+        expires_at = datetime.utcnow() + timedelta(minutes=5)
+
+        print(f"📝 Generated verification code: {verification_code}")
+
+        # Remover verificações antigas não utilizadas
+        db.query(EmailVerification).filter(
+            EmailVerification.user_id == user_id,
+            EmailVerification.verified == False
+        ).delete()
+
+        # Salvar no banco
+        db_verification = EmailVerification(
+            user_id=user_id,
+            email=email,
+            verification_code=verification_code,
+            verification_token=verification_token,
+            expires_at=expires_at
+        )
+        db.add(db_verification)
+        db.commit()
+
+        print(f"✅ Verification record saved to database")
+        print(f"📧 Código de verificação para {email}: {verification_code}")
+        print(f"🔗 Token: {verification_token}")
+        print(f"⏰ Expira em: {expires_at}")
+
+        return True
+
+    except Exception as e:
+        print(f"❌ Erro ao criar registro de verificação: {e}")
+        db.rollback()
+        return False
+
 @router.post("/send-verification")
 async def send_verification_email(
     request: SendVerificationRequest,
