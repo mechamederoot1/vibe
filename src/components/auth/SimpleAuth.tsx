@@ -364,7 +364,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
                 onClick={() => {
                   if (isLogin) {
                     // Redirecionar para cadastro em etapas
-                    window.location.href = "/cadastro";
+                    navigate("/cadastro");
                   } else {
                     setIsLogin(!isLogin);
                     setError("");
