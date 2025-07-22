@@ -3,17 +3,60 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 const crypto = require('crypto');
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// Debug do arquivo .env
+console.log('📁 Diretório atual:', __dirname);
+console.log('📁 Arquivo .env esperado em:', path.join(__dirname, '.env'));
+
+// Tentar diferentes formas de carregar o .env
+const fs = require('fs');
+const envPath = path.join(__dirname, '.env');
+
+if (fs.existsSync(envPath)) {
+  console.log('✅ Arquivo .env encontrado');
+
+  // Carregar manualmente se dotenv falhar
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  console.log('📋 Conteúdo do .env:', envContent.split('\n').filter(line => line && !line.startsWith('#')));
+
+  // Parse manual das variáveis
+  envContent.split('\n').forEach(line => {
+    if (line && !line.startsWith('#') && line.includes('=')) {
+      const [key, ...valueParts] = line.split('=');
+      const value = valueParts.join('=').trim();
+      if (key && value) {
+        process.env[key.trim()] = value;
+      }
+    }
+  });
+} else {
+  console.log('❌ Arquivo .env não encontrado em:', envPath);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Validar variáveis de ambiente necessárias
+const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Variáveis de ambiente faltando:', missingVars);
+  console.log('💡 Crie um arquivo .env na pasta backend/email-service com as configurações necessárias');
+  console.log('📋 Variáveis disponíveis:', Object.keys(process.env).filter(key => key.includes('SMTP') || key.includes('DB')));
+} else {
+  console.log('✅ Todas as variáveis de ambiente carregadas com sucesso');
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Configuração do transportador de e-mail
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
   secure: false, // true para 465, false para outros ports

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { Logo } from "../ui/Logo";
 import { emailVerificationService } from "../../services/EmailVerificationService";
@@ -8,6 +9,7 @@ interface AuthProps {
 }
 
 export function SimpleAuth({ onLogin }: AuthProps) {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     first_name: "",
@@ -152,13 +154,13 @@ export function SimpleAuth({ onLogin }: AuthProps) {
 
             console.log("📦 User data stored in localStorage");
             console.log("🔄 Redirecting to verification page...");
-            
-            // Show success message
+
+            // Show success message and navigate
             alert('Conta criada com sucesso! Redirecionando para verificação de e-mail...');
 
-            // Use setTimeout to ensure state is updated before redirect
+            // Use navigate instead of window.location.href
             setTimeout(() => {
-              window.location.href = "/verify-email";
+              navigate('/verify-email');
             }, 100);
 
           } catch (storageError) {
@@ -166,7 +168,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
             // Fallback: still redirect to verification page
             alert('Conta criada! Redirecionando para verificação...');
             setTimeout(() => {
-              window.location.href = "/verify-email";
+              navigate('/verify-email');
             }, 100);
           }
         }
@@ -346,7 +348,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           {isLogin && (
             <div className="mt-4 text-center">
               <button
-                onClick={() => window.location.href = '/forgot-password'}
+                onClick={() => navigate('/forgot-password')}
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
                 Esqueci minha senha
@@ -362,7 +364,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
                 onClick={() => {
                   if (isLogin) {
                     // Redirecionar para cadastro em etapas
-                    window.location.href = "/cadastro";
+                    navigate("/cadastro");
                   } else {
                     setIsLogin(!isLogin);
                     setError("");

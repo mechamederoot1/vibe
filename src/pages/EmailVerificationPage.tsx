@@ -298,7 +298,7 @@ const EmailVerificationPage: React.FC = () => {
 
       // Redirecionar para home
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.reload(); // Recarrega para aplicar o login
       }, 2000);
     }
   };
@@ -568,7 +568,7 @@ const EmailVerificationPage: React.FC = () => {
         {/* Back to Login */}
         <div className="mt-6 pt-4 border-t border-gray-200 text-center">
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/')}
             className="text-gray-600 hover:text-gray-700 text-sm flex items-center justify-center space-x-1"
           >
             <ArrowLeft className="w-3 h-3" />
