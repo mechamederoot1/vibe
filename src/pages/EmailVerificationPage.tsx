@@ -41,11 +41,19 @@ const EmailVerificationPage: React.FC = () => {
       verifyWithToken(token);
     }
 
-    // Recuperar dados do usuário do localStorage ou contexto
+    // Recuperar dados do usuário do localStorage
     const storedUser = localStorage.getItem('user');
+    const pendingUser = localStorage.getItem('pendingVerificationUser');
     const storedEmail = localStorage.getItem('pendingVerificationEmail');
-    
-    if (storedUser) {
+
+    if (pendingUser) {
+      // Usuário recém-registrado
+      const user = JSON.parse(pendingUser);
+      setUserData(user);
+      setEmail(user.email || storedEmail || '');
+      setNewEmail(user.email || storedEmail || '');
+    } else if (storedUser) {
+      // Usuário logado
       const user = JSON.parse(storedUser);
       setUserData(user);
       setEmail(user.email || storedEmail || '');
