@@ -44,7 +44,7 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({ userToken, onCreateStory
 
   useEffect(() => {
     fetchStories();
-    
+
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -53,6 +53,13 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({ userToken, onCreateStory
     window.addEventListener('resize', checkIfMobile);
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
+
+  // Refresh stories when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      fetchStories();
+    }
+  }, [refreshTrigger]);
 
   useEffect(() => {
     // Group stories by author
