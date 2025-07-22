@@ -68,6 +68,13 @@ export function SimpleAuth({ onLogin }: AuthProps) {
         };
       } else {
         // Para registro, garantir que os campos obrigatórios estão presentes
+        const baseUsername = `${formData.first_name.toLowerCase()}${formData.last_name.toLowerCase()}`
+          .replace(/[^a-z0-9]/g, "")
+          .substring(0, 15);
+        const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const username = `${baseUsername}${randomSuffix}`;
+        const displayId = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
+
         payload = {
           first_name: formData.first_name,
           last_name: formData.last_name,
@@ -75,7 +82,9 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           password: formData.password,
           gender: null, // Permitir null para gender
           birth_date: null, // Permitir null para birth_date
-          phone: null // Permitir null para phone
+          phone: null, // Permitir null para phone
+          username: username,
+          display_id: displayId,
         };
       }
 
@@ -89,18 +98,39 @@ export function SimpleAuth({ onLogin }: AuthProps) {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      console.log("Response data:", data);
-      console.log("Is login:", isLogin);
+      const responseText = await response.text();
+      console.log("Response status:", response.status);
+      console.log("Response text:", responseText);
 
       if (response.ok) {
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Error parsing response:', parseError);
+          setError("Erro na resposta do servidor");
+          return;
+        }
+
         if (isLogin) {
-          onLogin({
-            name: `${data.first_name} ${data.last_name}`,
-            email: data.email,
-            token: data.access_token,
-            id: data.id,
+          // Get user details for login
+          const userResponse = await fetch("http://localhost:8000/auth/me", {
+            headers: {
+              Authorization: `Bearer ${data.access_token}`,
+            },
           });
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            onLogin({
+              name: `${userData.first_name} ${userData.last_name}`,
+              email: userData.email,
+              token: data.access_token,
+              id: userData.id,
+            });
+          } else {
+            setError("Erro ao obter dados do usuário");
+          }
         } else {
           // After registration, redirect to verification
           console.log("✅ Registration successful, processing...");
@@ -112,8 +142,8 @@ export function SimpleAuth({ onLogin }: AuthProps) {
               firstName: data.first_name,
               lastName: data.last_name,
               email: data.email,
-              username: data.username || `${formData.first_name.toLowerCase()}${formData.last_name.toLowerCase()}`.replace(/[^a-z0-9]/g, "").substring(0, 15) + Math.floor(Math.random() * 1000),
-              display_id: data.display_id || Math.floor(Math.random() * 9000000000 + 1000000000).toString(),
+              username: data.username || payload.username,
+              display_id: data.display_id || payload.display_id,
             };
 
             localStorage.setItem("pendingVerificationUser", JSON.stringify(userData));
@@ -122,6 +152,9 @@ export function SimpleAuth({ onLogin }: AuthProps) {
 
             console.log("📦 User data stored in localStorage");
             console.log("🔄 Redirecting to verification page...");
+            
+            // Show success message
+            alert('Conta criada com sucesso! Redirecionando para verificação de e-mail...');
 
             // Use setTimeout to ensure state is updated before redirect
             setTimeout(() => {
@@ -131,6 +164,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           } catch (storageError) {
             console.error("❌ Error storing user data:", storageError);
             // Fallback: still redirect to verification page
+            alert('Conta criada! Redirecionando para verificação...');
             setTimeout(() => {
               window.location.href = "/verify-email";
             }, 100);
@@ -140,7 +174,7 @@ export function SimpleAuth({ onLogin }: AuthProps) {
         // Handle registration/login error
         let errorData;
         try {
-          errorData = await response.json();
+          errorData = JSON.parse(responseText);
         } catch (jsonError) {
           console.error("Error parsing response JSON:", jsonError);
           errorData = { detail: "Erro na resposta do servidor" };

@@ -60,10 +60,13 @@ async def send_verification_email(
         email = request.email
         first_name = request.first_name
         user_id = request.user_id
+        
+        print(f"📧 Received verification request for user {user_id}: {email}")
 
         # Verificar se o usuário existe
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
+            print(f"❌ User {user_id} not found in database")
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
         # Verificar limite de tentativas (anti-spam) - 5 por hora
@@ -74,6 +77,7 @@ async def send_verification_email(
         ).count()
 
         if recent_attempts >= 5:
+            print(f"❌ Too many attempts for user {user_id}")
             raise HTTPException(
                 status_code=429,
                 detail="Muitas tentativas. Tente novamente em 1 hora."
@@ -89,6 +93,7 @@ async def send_verification_email(
         if recent_attempt:
             remaining_time = 60 - int((datetime.utcnow() - recent_attempt.created_at).total_seconds())
             if remaining_time > 0:
+                print(f"❌ Cooldown active for user {user_id}: {remaining_time}s remaining")
                 raise HTTPException(
                     status_code=429,
                     detail=f"Aguarde {remaining_time} segundos antes de solicitar um novo código",
@@ -99,6 +104,8 @@ async def send_verification_email(
         verification_code = generate_verification_code()
         verification_token = generate_verification_token()
         expires_at = datetime.utcnow() + timedelta(minutes=5)
+        
+        print(f"📝 Generated verification code: {verification_code}")
 
         # Remover verificações antigas não utilizadas
         db.query(EmailVerification).filter(
@@ -116,6 +123,8 @@ async def send_verification_email(
         )
         db.add(db_verification)
         db.commit()
+        
+        print(f"✅ Verification record saved to database")
 
         # Log do código (em produção, envie por e-mail real)
         print(f"📧 Código de verificação para {email}: {verification_code}")
@@ -144,6 +153,8 @@ async def verify_code(
     try:
         user_id = request.user_id
         code = request.code
+        
+        print(f"🔍 Verifying code {code} for user {user_id}")
 
         # Buscar código válido
         verification = db.query(EmailVerification).filter(
@@ -154,6 +165,7 @@ async def verify_code(
         ).first()
 
         if not verification:
+            print(f"❌ Invalid or expired code for user {user_id}")
             raise HTTPException(
                 status_code=400,
                 detail="Código inválido ou expirado"
@@ -167,6 +179,7 @@ async def verify_code(
         user = db.query(User).filter(User.id == user_id).first()
         if user:
             user.is_verified = True
+            print(f"✅ User {user_id} marked as verified")
 
         db.commit()
 

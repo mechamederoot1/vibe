@@ -39,6 +39,7 @@ const EmailVerificationPage: React.FC = () => {
     // Verificar se há token na URL (verificação automática via link do e-mail)
     const token = searchParams.get('token');
     if (token) {
+      console.log('🔗 Token found in URL, verifying automatically...');
       verifyWithToken(token);
     }
 
@@ -46,17 +47,35 @@ const EmailVerificationPage: React.FC = () => {
     const pendingUser = localStorage.getItem('pendingVerificationUser');
     const storedEmail = localStorage.getItem('pendingVerificationEmail');
 
+    console.log('📦 Checking localStorage data:');
+    console.log('  - pendingUser:', !!pendingUser);
+    console.log('  - storedEmail:', storedEmail);
+
     if (pendingUser) {
       // Usuário recém-registrado
-      const user = JSON.parse(pendingUser);
-      setUserData(user);
-      setEmail(user.email || storedEmail || '');
-      setNewEmail(user.email || storedEmail || '');
-      
-      // Tentar enviar código automaticamente na primeira vez
-      if (user.id && (user.email || storedEmail)) {
-        sendInitialVerificationCode(user);
+      try {
+        const user = JSON.parse(pendingUser);
+        console.log('👤 User data loaded:', user);
+        setUserData(user);
+        setEmail(user.email || storedEmail || '');
+        setNewEmail(user.email || storedEmail || '');
+        
+        // Tentar enviar código automaticamente na primeira vez
+        if (user.id && (user.email || storedEmail)) {
+          console.log('📧 Attempting to send initial verification code...');
+          sendInitialVerificationCode(user);
+        } else {
+          console.warn('⚠️ Missing user ID or email for verification');
+        }
+      } catch (parseError) {
+        console.error('❌ Error parsing user data from localStorage:', parseError);
+        setMessage('Erro ao carregar dados do usuário. Tente fazer login novamente.');
+        setMessageType('error');
       }
+    } else {
+      console.warn('⚠️ No pending user data found in localStorage');
+      setMessage('Nenhum usuário pendente encontrado. Faça o cadastro novamente.');
+      setMessageType('error');
     }
   }, [searchParams]);
 
@@ -84,22 +103,80 @@ const EmailVerificationPage: React.FC = () => {
     try {
       setHasTriedSending(true);
       console.log('📧 Enviando código inicial de verificação...');
-      
-      const response = await emailVerificationService.sendVerificationEmail({
+      console.log('📋 User data for verification:', {
         email: user.email,
         firstName: user.firstName,
         userId: user.id
       });
+      
+      // Try the backend email verification service first
+      const response = await fetch('http://localhost:8000/email-verification/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          first_name: user.firstName,
+          user_id: user.id
+        })
+      });
 
-      if (response.success) {
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Verification email sent via backend:', data);
         setMessage('Código de verificação enviado para seu e-mail!');
         setMessageType('success');
         setCountdown(60); // 1 minuto de cooldown
         setCanResend(false);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Backend email service failed:', errorData);
+        
+        // Fallback to external email service
+        console.log('🔄 Trying external email service...');
+        await tryExternalEmailService(user);
       }
     } catch (error: any) {
       console.error('❌ Erro ao enviar código inicial:', error);
-      setMessage('Erro ao enviar código. Clique em "Reenviar código" para tentar novamente.');
+      
+      // Fallback to external email service
+      console.log('🔄 Trying external email service as fallback...');
+      await tryExternalEmailService(user);
+    }
+  };
+
+  const tryExternalEmailService = async (user: any) => {
+    try {
+      const response = await fetch('http://localhost:3001/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          firstName: user.firstName,
+          userId: user.id
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Verification email sent via external service:', data);
+        setMessage('Código de verificação enviado para seu e-mail!');
+        setMessageType('success');
+        setCountdown(60);
+        setCanResend(false);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ External email service also failed:', errorData);
+        setMessage('Erro ao enviar código. Clique em "Reenviar código" para tentar novamente.');
+        setMessageType('error');
+        setCanResend(true);
+      }
+    } catch (externalError) {
+      console.error('❌ External email service error:', externalError);
+      setMessage('Serviço de e-mail temporariamente indisponível. Clique em "Reenviar código" para tentar novamente.');
       setMessageType('error');
       setCanResend(true);
     }
@@ -231,13 +308,25 @@ const EmailVerificationPage: React.FC = () => {
 
     setResendLoading(true);
     try {
-      const response = await emailVerificationService.sendVerificationEmail({
-        email: editingEmail ? newEmail : email,
-        firstName: userData.firstName,
-        userId: userData.id
+      const emailToUse = editingEmail ? newEmail : email;
+      console.log('📧 Resending verification code to:', emailToUse);
+      
+      // Try backend service first
+      const response = await fetch('http://localhost:8000/email-verification/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailToUse,
+          first_name: userData.firstName,
+          user_id: userData.id
+        })
       });
 
-      if (response.success) {
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Code resent successfully:', data);
         setMessage('Novo código enviado com sucesso!');
         setMessageType('success');
         setCountdown(60); // 1 minuto de cooldown
@@ -245,22 +334,62 @@ const EmailVerificationPage: React.FC = () => {
         
         // Se estava editando e-mail, confirmar a mudança
         if (editingEmail) {
-          setEmail(newEmail);
+          setEmail(emailToUse);
           setEditingEmail(false);
-          localStorage.setItem('pendingVerificationEmail', newEmail);
+          localStorage.setItem('pendingVerificationEmail', emailToUse);
         }
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Backend resend failed:', errorData);
+        
+        // Try external service
+        await tryExternalResend(emailToUse);
       }
     } catch (error: any) {
-      console.error('❌ Erro ao reenviar código:', error);
-      setMessage(error.message || 'Erro ao reenviar código');
-      setMessageType('error');
-      
-      // Se há tempo de retry no erro, usar esse tempo
-      if (error.retryAfter) {
-        setCountdown(Math.ceil(error.retryAfter / 1000));
-      }
+      console.error('❌ Error during resend:', error);
+      await tryExternalResend(editingEmail ? newEmail : email);
     } finally {
       setResendLoading(false);
+    }
+  };
+
+  const tryExternalResend = async (emailToUse: string) => {
+    try {
+      const response = await fetch('http://localhost:3001/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailToUse,
+          firstName: userData.firstName,
+          userId: userData.id
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ External resend successful:', data);
+        setMessage('Novo código enviado com sucesso!');
+        setMessageType('success');
+        setCountdown(60);
+        setCanResend(false);
+        
+        if (editingEmail) {
+          setEmail(emailToUse);
+          setEditingEmail(false);
+          localStorage.setItem('pendingVerificationEmail', emailToUse);
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('❌ External resend failed:', errorData);
+        setMessage(errorData.message || 'Erro ao reenviar código');
+        setMessageType('error');
+      }
+    } catch (error: any) {
+      console.error('❌ External resend error:', error);
+      setMessage('Erro ao reenviar código');
+      setMessageType('error');
     }
   };
 

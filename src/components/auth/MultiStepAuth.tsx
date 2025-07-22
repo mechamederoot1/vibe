@@ -192,6 +192,7 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
     if (!validateStep(5)) return;
 
     setLoading(true);
+    console.log('🚀 Starting registration process...');
 
     try {
       // Formatando a data de nascimento para o backend
@@ -234,56 +235,61 @@ export function MultiStepAuth({ onLogin }: AuthProps) {
         body: JSON.stringify(registrationData),
       });
 
+      const responseText = await response.text();
+      console.log('Registration response status:', response.status);
+      console.log('Registration response text:', responseText);
+
       if (response.ok) {
-        const userData = await response.json();
-        console.log("Registration successful, starting email verification process");
+        let userData;
+        try {
+          userData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Error parsing registration response:', parseError);
+          setErrors({ general: "Erro na resposta do servidor" });
+          return;
+        }
+
+        console.log("✅ Registration successful:", userData);
         
         // Salvar dados temporários para verificação de e-mail
-        localStorage.setItem('pendingVerificationEmail', formData.email);
-        localStorage.setItem('pendingUserData', JSON.stringify({
+        const userDataForStorage = {
           id: userData.id,
           firstName: formData.firstName,
           lastName: formData.lastName,
-          email: formData.email
-        }));
+          email: formData.email,
+          username: userData.username || username,
+          display_id: userData.display_id || displayId,
+        };
+
+        console.log('💾 Storing user data:', userDataForStorage);
+        localStorage.setItem('pendingVerificationUser', JSON.stringify(userDataForStorage));
+        localStorage.setItem('pendingVerificationEmail', formData.email);
         localStorage.setItem('pendingPassword', formData.password);
 
-        // Enviar e-mail de verificação
-        try {
-          const emailResponse = await fetch('http://localhost:3001/send-verification', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              firstName: formData.firstName,
-              userId: userData.id
-            })
-          });
-
-          if (emailResponse.ok) {
-            console.log("Verification email sent successfully");
-            // Redirecionar para página de verificação
-            window.location.href = '/verify-email';
-          } else {
-            const emailError = await emailResponse.json();
-            console.warn("Email service unavailable, proceeding anyway:", emailError);
-            // Mesmo se o e-mail falhar, redirecionar para verificação
-            window.location.href = '/verify-email';
-          }
-        } catch (emailError) {
-          console.warn("Email service unavailable, proceeding anyway:", emailError);
-          // Mesmo se o e-mail falhar, redirecionar para verificação
+        console.log('🔄 Redirecting to verification page...');
+        
+        // Show success message before redirect
+        setErrors({ general: "" });
+        alert('Conta criada com sucesso! Redirecionando para verificação de e-mail...');
+        
+        // Use navigate instead of window.location for better React handling
+        setTimeout(() => {
           window.location.href = '/verify-email';
-        }
+        }, 100);
       } else {
-        const error = await response.json();
-        console.error("Registration error:", error);
-        setErrors({ general: error.detail || "Erro ao criar conta" });
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          errorData = { detail: "Erro no servidor" };
+        }
+        
+        console.error("❌ Registration error:", errorData);
+        setErrors({ general: errorData.detail || "Erro ao criar conta" });
       }
     } catch (error) {
-      console.error("Erro no cadastro:", error);
+      console.error("❌ Network error during registration:", error);
       setErrors({ general: "Erro de conexão. Tente novamente." });
     } finally {
       setLoading(false);
