@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Configuração do transportador de e-mail
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
   secure: false, // true para 465, false para outros ports
