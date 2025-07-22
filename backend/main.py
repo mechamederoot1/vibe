@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from core.config import ALLOWED_ORIGINS
 from core.database import engine, Base
 from routes import auth_router, posts_router, users_router
+from routes.email_verification import router as email_verification_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
