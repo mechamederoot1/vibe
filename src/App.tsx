@@ -20,6 +20,7 @@ import { PostPage } from "./pages/PostPage";
 import { PublicProfilePage } from "./pages/PublicProfilePage";
 import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";
+import EmailVerificationPage from "./pages/EmailVerificationPage";
 import { notificationService } from "./services/NotificationService";
 import { apiCall } from "./config/api";
 
@@ -162,6 +163,10 @@ function App() {
             <Route
               path="/politica-de-privacidade"
               element={<PrivacyPolicy />}
+            />
+            <Route
+              path="/verify-email"
+              element={<EmailVerificationPage />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

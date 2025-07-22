@@ -383,7 +383,7 @@ export const EnhancedStoriesBar: React.FC<StoriesBarProps> = ({
                   <div
                     className={`w-12 h-12 md:w-16 md:h-16 rounded-full p-0.5 group-hover:scale-105 transition-all duration-300 ${
                       hasUnread
-                        ? "bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-lg animate-pulse"
+                        ? "bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-lg"
                         : "bg-gray-300"
                     }`}
                     style={{
@@ -401,12 +401,12 @@ export const EnhancedStoriesBar: React.FC<StoriesBarProps> = ({
 
                   {/* Additional glow effect for unread stories */}
                   {hasUnread && (
-                    <div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-20 animate-ping pointer-events-none"></div>
+                    <div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-20 pointer-events-none"></div>
                   )}
 
                   {/* Unread indicator */}
                   {hasUnread && unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </div>
                   )}

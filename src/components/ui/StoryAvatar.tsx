@@ -46,54 +46,63 @@ export function StoryAvatar({
 
   const getAvatarUrl = () => {
     if (!avatarUrl) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3B82F6&color=fff`;
+      return null; // Retorna null para mostrar ícone ao invés de URL gerada
     }
-    
+
     if (avatarUrl.startsWith('http')) {
       return avatarUrl;
     }
-    
+
     return `http://localhost:8000${avatarUrl}`;
   };
 
-  const handleAvatarClick = () => {
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (showOptionsMenu && (onViewPhoto || onViewStory)) {
-      setShowMenu(true);
+      setShowMenu(!showMenu);
     } else if (onClick) {
       onClick();
     }
   };
 
-  const handleViewPhoto = () => {
+  const handleViewPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowMenu(false);
     if (onViewPhoto) onViewPhoto();
   };
 
-  const handleViewStory = () => {
+  const handleViewStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowMenu(false);
     if (onViewStory) onViewStory();
   };
 
   const avatarElement = (
     <div className={`relative inline-block ${className}`}>
-      {/* Story indicator ring - more visible with thicker border */}
+      {/* Story indicator ring - static without animation */}
       {showIndicator && hasStories && !loading && (
         <div className={`absolute -inset-1 rounded-full bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 p-1 shadow-lg`}>
-          {/* Animated pulse ring */}
-          <div className={`absolute inset-0 rounded-full bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 animate-ping opacity-75`} />
         </div>
       )}
 
-      {/* Avatar image */}
-      <img
-        src={getAvatarUrl()}
-        alt={userName}
-        className={`${sizeClasses[size]} rounded-full object-cover ${
-          showIndicator && hasStories && !loading
-            ? 'border-3 border-white relative z-10'
-            : 'border-2 border-gray-200'
-        } shadow-md`}
-      />
+      {/* Avatar image or icon */}
+      {getAvatarUrl() ? (
+        <img
+          src={getAvatarUrl()}
+          alt={userName}
+          className={`${sizeClasses[size]} rounded-full object-cover ${
+            showIndicator && hasStories && !loading
+              ? 'border-3 border-white relative z-10'
+              : 'border-2 border-gray-200'
+          } shadow-md`}
+        />
+      ) : (
+        <div
+          className={`${sizeClasses[size]} rounded-full bg-gray-100 border-2 border-gray-200 shadow-md flex items-center justify-center`}
+        >
+          <User className={`${size === 'small' ? 'w-4 h-4' : size === 'medium' ? 'w-6 h-6' : 'w-12 h-12'} text-gray-400`} />
+        </div>
+      )}
 
       {/* Loading indicator */}
       {loading && showIndicator && (
@@ -106,7 +115,10 @@ export function StoryAvatar({
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setShowMenu(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(false);
+            }}
           />
 
           {/* Menu */}
