@@ -56,9 +56,10 @@ export function StoryAvatar({
     return `http://localhost:8000${avatarUrl}`;
   };
 
-  const handleAvatarClick = () => {
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (showOptionsMenu && (onViewPhoto || onViewStory)) {
-      setShowMenu(true);
+      setShowMenu(!showMenu);
     } else if (onClick) {
       onClick();
     }
