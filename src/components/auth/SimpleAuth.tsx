@@ -30,17 +30,41 @@ export function SimpleAuth({ onLogin }: AuthProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(`🚀 Starting ${isLogin ? 'login' : 'registration'} process...`);
+
     setLoading(true);
     setError("");
 
+    // Validate form data
+    if (!isLogin) {
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.password) {
+        setError("Por favor, preencha todos os campos obrigatórios");
+        setLoading(false);
+        return;
+      }
+
+      if (formData.password !== formData.confirm_password) {
+        setError("As senhas não coincidem");
+        setLoading(false);
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        setError("A senha deve ter pelo menos 6 caracteres");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
-      
+      console.log(`📡 Making request to: http://localhost:8000${endpoint}`);
+
       let payload;
       if (isLogin) {
-        payload = { 
-          email: formData.email, 
-          password: formData.password 
+        payload = {
+          email: formData.email,
+          password: formData.password
         };
       } else {
         // Para registro, garantir que os campos obrigatórios estão presentes
@@ -54,6 +78,8 @@ export function SimpleAuth({ onLogin }: AuthProps) {
           phone: null // Permitir null para phone
         };
       }
+
+      console.log("📦 Payload:", { ...payload, password: '***' });
 
       const response = await fetch(`http://localhost:8000${endpoint}`, {
         method: "POST",
