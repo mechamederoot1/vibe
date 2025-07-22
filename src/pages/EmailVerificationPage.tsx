@@ -82,7 +82,7 @@ const EmailVerificationPage: React.FC = () => {
   const verifyWithToken = async (token: string) => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/verify-token', { token });
+      const response = await axios.post(`http://localhost:8000/email-verification/verify-token?token=${token}`);
       
       if (response.data.success) {
         setIsVerified(true);
