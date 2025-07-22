@@ -170,6 +170,14 @@ function App() {
               path="/verify-email"
               element={<EmailVerificationPage />}
             />
+            <Route
+              path="/forgot-password"
+              element={<ForgotPasswordPage />}
+            />
+            <Route
+              path="/reset-password"
+              element={<ResetPasswordPage />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
