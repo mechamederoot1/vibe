@@ -70,6 +70,7 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.include_router(auth_router)
 app.include_router(posts_router)
 app.include_router(users_router)
+app.include_router(email_verification_router)
 
 @app.get("/")
 async def root():
