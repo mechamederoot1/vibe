@@ -88,7 +88,10 @@ class EmailVerificationService {
    */
   async verifyToken(data: VerifyTokenRequest): Promise<VerificationResponse> {
     try {
-      const response = await axios.post(`${this.baseURL}/verify-token`, data);
+      const params = new URLSearchParams({
+        token: data.token
+      });
+      const response = await axios.post(`${this.baseURL}/verify-token?${params}`);
       return response.data;
     } catch (error: any) {
       if (error.response?.data) {
