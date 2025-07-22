@@ -401,7 +401,7 @@ export const EnhancedStoriesBar: React.FC<StoriesBarProps> = ({
 
                   {/* Additional glow effect for unread stories */}
                   {hasUnread && (
-                    <div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-20 animate-ping pointer-events-none"></div>
+                    <div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-20 pointer-events-none"></div>
                   )}
 
                   {/* Unread indicator */}
