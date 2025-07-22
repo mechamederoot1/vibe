@@ -171,8 +171,12 @@ export function PhotoViewerModal({
   if (!isOpen || !currentPhoto) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" onClick={(e) => {
+      // Only close if clicking on the backdrop, not on the content
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    }}>
         <div className="w-full h-full flex flex-col md:flex-row max-w-7xl mx-auto">
           {/* Photo Section */}
           <div className="flex-1 relative flex items-center justify-center p-4">
@@ -342,7 +346,6 @@ export function PhotoViewerModal({
             </div>
           </div>
         </div>
-      </div>
 
       {/* Share Modal */}
       {showShareModal && (
@@ -365,6 +368,6 @@ export function PhotoViewerModal({
           userToken={userToken}
         />
       )}
-    </>
+    </div>
   );
 }
