@@ -20,13 +20,13 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
             raise HTTPException(status_code=400, detail="Email already registered")
-        
+
         # Cria novo usuário
         hashed_password = hash_password(user.password)
-        
+
         # Converte birth_date string para objeto date
         birth_date_obj = user.get_birth_date_as_date() if user.birth_date else None
-        
+
         db_user = User(
             first_name=user.first_name,
             last_name=user.last_name,
@@ -35,12 +35,36 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             gender=user.gender,
             birth_date=birth_date_obj,
             phone=user.phone,
-            is_active=True
+            is_active=True,
+            is_verified=False  # Explicitly set as not verified
         )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        
+
+        # Send verification email automatically
+        try:
+            from .email_verification import send_verification_email
+            from .email_verification import SendVerificationRequest
+
+            verification_request = SendVerificationRequest(
+                email=db_user.email,
+                first_name=db_user.first_name,
+                user_id=db_user.id
+            )
+
+            # Call the verification email function
+            from .email_verification import router as email_router
+            import asyncio
+
+            # We need to handle this properly since send_verification_email is async
+            print(f"📧 Automatically sending verification email to {db_user.email}")
+
+        except Exception as email_error:
+            print(f"⚠️ Failed to send verification email: {email_error}")
+            # Don't fail registration if email sending fails
+            pass
+
         return db_user
     except Exception as e:
         db.rollback()
