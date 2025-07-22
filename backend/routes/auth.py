@@ -18,6 +18,18 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     try:
         print(f"🔍 Registration attempt for email: {user.email}")
 
+        # Validate required fields
+        if not user.first_name or not user.first_name.strip():
+            raise HTTPException(status_code=400, detail="Nome é obrigatório")
+        if not user.last_name or not user.last_name.strip():
+            raise HTTPException(status_code=400, detail="Sobrenome é obrigatório")
+        if not user.email or not user.email.strip():
+            raise HTTPException(status_code=400, detail="E-mail é obrigatório")
+        if not user.password or len(user.password) < 6:
+            raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
+
+        print(f"✅ Required fields validated")
+
         # Verifica se o usuário já existe
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
