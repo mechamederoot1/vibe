@@ -383,7 +383,7 @@ export const EnhancedStoriesBar: React.FC<StoriesBarProps> = ({
                   <div
                     className={`w-12 h-12 md:w-16 md:h-16 rounded-full p-0.5 group-hover:scale-105 transition-all duration-300 ${
                       hasUnread
-                        ? "bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-lg animate-pulse"
+                        ? "bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-lg"
                         : "bg-gray-300"
                     }`}
                     style={{
