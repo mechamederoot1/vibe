@@ -46,6 +46,42 @@ def init_database():
         # Criar todas as tabelas
         Base.metadata.create_all(bind=engine)
         print("✅ Todas as tabelas foram criadas com sucesso!")
+
+        # Criar tabela de verificação de e-mail se não existir
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS email_verifications (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    verification_code VARCHAR(6) NOT NULL,
+                    verification_token VARCHAR(64) NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    verified BOOLEAN DEFAULT FALSE,
+                    verified_at DATETIME NULL,
+                    attempts INT DEFAULT 1,
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_token (verification_token),
+                    INDEX idx_code (verification_code)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """))
+
+            # Verificar se a coluna is_verified existe
+            result = conn.execute(text("""
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'vibe'
+                AND TABLE_NAME = 'users'
+                AND COLUMN_NAME = 'is_verified'
+            """))
+
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"))
+                print("✅ Coluna is_verified adicionada à tabela users!")
+
+            conn.commit()
+            print("✅ Tabelas de verificação de e-mail configuradas!")
         
         # Verificar tabelas criadas
         with engine.connect() as conn:
